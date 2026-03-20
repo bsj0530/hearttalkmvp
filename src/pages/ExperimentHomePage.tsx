@@ -38,7 +38,7 @@ const CATEGORY_STYLE: Record<
   korean4: {
     borderGradient:
       "bg-gradient-to-br from-[#A78BFA] via-[#C4B5FD] to-[#EDE9FE]",
-    innerBg: "bg-[#FAF8FF]",
+    innerBg: "bg-[#e2cbf6]",
     text: "text-[#6D28D9]",
   },
 };
