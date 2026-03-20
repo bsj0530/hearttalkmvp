@@ -73,6 +73,7 @@ export default function PhotoGrid({
   const turnNumberRef = useRef(0);
   const cardShownAtRef = useRef<string | null>(null);
   const pendingQuizRef = useRef<QuizData | null>(null);
+  const turnStartLoggedRef = useRef(false);
 
   const [turnDeck, setTurnDeck] = useState<(QuizData | null)[]>(
     Array(targetCount).fill(null),
@@ -277,27 +278,42 @@ export default function PhotoGrid({
   };
 
   /* ══════════════════════════════════════
-     이벤트 흐름 (한 턴 안에서 동일한 turn_number)
-
-     turn_start       ← 턴 시작
-     card_shown       ← 카드 클릭 (FlipCard3D → onCardShown)
-     answer           ← 옵션 클릭 즉시 (FlipCard3D → onAnswer)
-     feedback_start   ← 옵션 클릭 즉시 (onAnswer 안에서)
-     feedback_end     ← 애니메이션 완료 후 (FlipCard3D → onCorrect/onWrong)
+     이벤트 흐름 (한 턴 = 동일 turn_number)
+ 
+     turn_start       ← 카드 클릭 직전 (실제 행동 시작)
+     card_shown       ← 카드 클릭 (문제 표시)
+     answer           ← 옵션 클릭 즉시
+     feedback_start   ← 옵션 클릭 즉시
+     feedback_end     ← 애니메이션 완료 후
      turn_end         ← 애니메이션 완료 후
-
+ 
      → 게임 끝이면: game_end
-     → 계속이면: turn_number++, turn_start (다음 턴)
+     → 계속이면: turn_number++ (다음 카드 클릭 시 turn_start)
   ══════════════════════════════════════ */
 
-  // ① 카드 클릭 → card_shown
+  // ① 카드 클릭 → (turn_start) + card_shown
   const handleCardShown = (slotIndex: number) => {
+    const { playerId, playerName } = currentPlayerInfo();
+
+    // 이 턴의 turn_start가 아직 안 찍혔으면 여기서 찍음
+    if (!turnStartLoggedRef.current) {
+      logGameEvent({
+        turnNumber: turnNumberRef.current,
+        playerId,
+        playerName,
+        eventType: "turn_start",
+        category: categoryTitle,
+        level: activeLevel,
+        eventAt: nowISO(),
+      });
+      turnStartLoggedRef.current = true;
+    }
+
     const ts = nowISO();
     cardShownAtRef.current = ts;
 
     const q = turnDeck[slotIndex];
     pendingQuizRef.current = q;
-    const { playerId, playerName } = currentPlayerInfo();
 
     logGameEvent({
       turnNumber: turnNumberRef.current,
@@ -331,7 +347,6 @@ export default function PhotoGrid({
         new Date(cardShownAtRef.current).getTime();
     }
 
-    // answer
     logGameEvent({
       turnNumber: turnNumberRef.current,
       playerId,
@@ -349,7 +364,6 @@ export default function PhotoGrid({
       reactionTimeMs,
     });
 
-    // feedback_start
     logGameEvent({
       turnNumber: turnNumberRef.current,
       playerId,
@@ -362,7 +376,7 @@ export default function PhotoGrid({
     });
   };
 
-  // ③ 애니메이션 완료 → feedback_end + turn_end + (game_end or next turn_start)
+  // ③ 애니메이션 완료 → feedback_end + turn_end + (game_end or 다음 턴 준비)
   const handleTurnEnd = (
     slotIndex: number,
     correct: boolean,
@@ -426,7 +440,7 @@ export default function PhotoGrid({
     });
 
     if (isGameOver) {
-      // game_end (turn_end 후에 찍힘)
+      // game_end (turn_end 이후)
       logGameEvent({
         turnNumber: turnNumberRef.current,
         eventType: "game_end",
@@ -440,29 +454,19 @@ export default function PhotoGrid({
       });
 
       setWinner("협동 성공! (사진 완성)");
-      return; // 다음 turn_start 없음
+      return;
     }
 
-    // 다음 턴 시작
-    const nextIndex = players.length ? (activeIndex + 1) % players.length : 0;
+    // 다음 턴 준비 (turn_start는 다음 카드 클릭 시 찍힘)
     turnNumberRef.current += 1;
+    turnStartLoggedRef.current = false;
     cardShownAtRef.current = null;
     pendingQuizRef.current = null;
-
-    logGameEvent({
-      turnNumber: turnNumberRef.current,
-      playerId: players[nextIndex]?.id,
-      playerName: players[nextIndex]?.name,
-      eventType: "turn_start",
-      category: categoryTitle,
-      level: activeLevel,
-      eventAt: nowISO(),
-    });
 
     advanceTurn();
   };
 
-  /* ── winner 사운드/컨페티 (UI만, 로깅 아님) ── */
+  /* ── winner 사운드/컨페티 ── */
 
   useEffect(() => {
     if (!winner || winnerSoundPlayedRef.current) return;
@@ -501,6 +505,7 @@ export default function PhotoGrid({
     usedIdsRef.current = new Set();
     poolRef.current.loaded = false;
     turnNumberRef.current = 0;
+    turnStartLoggedRef.current = false;
     cardShownAtRef.current = null;
     pendingQuizRef.current = null;
     setTurnDeck(Array(targetCount).fill(null));
@@ -595,6 +600,7 @@ export default function PhotoGrid({
     usedIdsRef.current = new Set();
     poolRef.current.loaded = false;
     turnNumberRef.current = 0;
+    turnStartLoggedRef.current = false;
     cardShownAtRef.current = null;
     pendingQuizRef.current = null;
 
@@ -641,17 +647,9 @@ export default function PhotoGrid({
       },
     });
 
-    // 첫 번째 turn_start (turn 1)
+    // 첫 번째 턴 준비 (turn_start는 첫 카드 클릭 시 찍힘)
     turnNumberRef.current = 1;
-    logGameEvent({
-      turnNumber: 1,
-      playerId: mappedPlayers[0]?.id,
-      playerName: mappedPlayers[0]?.name,
-      eventType: "turn_start",
-      category: categoryTitle,
-      level: selectedLevel,
-      eventAt: nowISO(),
-    });
+    turnStartLoggedRef.current = false;
   };
 
   const goBackToGameSelect = () => {
