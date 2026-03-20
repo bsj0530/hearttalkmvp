@@ -29,6 +29,7 @@ import {
   normalizeOptions,
 } from "@/lib/photo-grid.utils";
 import { useParticipant } from "@/store/participants";
+import { logGameEvent, nowISO } from "@/lib/game-logger";
 
 export default function PhotoGrid({
   categoryTitle,
@@ -68,6 +69,11 @@ export default function PhotoGrid({
 
   const usedIdsRef = useRef<Set<number>>(new Set());
 
+  /* ── 로깅용 refs ── */
+  const turnNumberRef = useRef(0);
+  const cardShownAtRef = useRef<string | null>(null);
+  const pendingQuizRef = useRef<QuizData | null>(null);
+
   const [turnDeck, setTurnDeck] = useState<(QuizData | null)[]>(
     Array(targetCount).fill(null),
   );
@@ -81,12 +87,12 @@ export default function PhotoGrid({
   }>({ loaded: false, lastCategory: undefined, low: [], mid: [], high: [] });
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-
   const gridWrapRef = useRef<HTMLDivElement | null>(null);
   const [cardH, setCardH] = useState(230);
   const [gridReady, setGridReady] = useState(false);
-
   const winnerSoundPlayedRef = useRef(false);
+
+  /* ── 기본 hooks ── */
 
   useEffect(() => {
     return () => {
@@ -97,24 +103,19 @@ export default function PhotoGrid({
   useLayoutEffect(() => {
     const el = gridWrapRef.current;
     if (!el) return;
-
     const GAP = 16;
     const BOTTOM_SAFE = 24;
-
     const compute = () => {
       const rect = el.getBoundingClientRect();
       const available = window.innerHeight - rect.top - BOTTOM_SAFE;
       const h = (available - GAP * (gridRows - 1)) / gridRows;
-      const clamped = Math.max(160, Math.min(320, Math.floor(h)));
-      setCardH(clamped);
+      setCardH(Math.max(160, Math.min(320, Math.floor(h))));
       setGridReady(true);
     };
-
     compute();
     const ro = new ResizeObserver(compute);
     ro.observe(el);
     window.addEventListener("resize", compute);
-
     return () => {
       ro.disconnect();
       window.removeEventListener("resize", compute);
@@ -125,13 +126,11 @@ export default function PhotoGrid({
     queryKey: ["players", participantId],
     queryFn: async () => {
       if (!participantId) return [];
-
       const { data, error } = await supabase
         .from("player_profiles")
         .select("id,nickname,level")
         .eq("participant_id", participantId)
         .order("created_at", { ascending: false });
-
       if (error) throw error;
       return (data ?? []) as PlayerProfile[];
     },
@@ -145,7 +144,6 @@ export default function PhotoGrid({
 
   useEffect(() => {
     if (gameStarted) return;
-
     setTurnDeck(Array(targetCount).fill(null));
     setRevealed(Array(targetCount).fill(false));
   }, [targetCount, gameStarted]);
@@ -157,17 +155,17 @@ export default function PhotoGrid({
     });
   }, [turnDeck]);
 
+  /* ── 데이터 로딩 ── */
+
   const fetchByLevel = useCallback(
     async (lv: "low" | "mid" | "high") => {
       if (!categoryTitle) return [];
-
       const { data, error } = await supabase
         .from("quizzes")
         .select("*")
         .eq("category", categoryTitle)
         .eq("level", lv)
         .limit(POOL_SIZE);
-
       if (error) throw error;
       return (data ?? []) as QuizData[];
     },
@@ -177,9 +175,7 @@ export default function PhotoGrid({
   const ensurePoolLoaded = useCallback(async () => {
     const needReload =
       !poolRef.current.loaded || poolRef.current.lastCategory !== categoryTitle;
-
     if (!needReload) return;
-
     if (!categoryTitle) {
       poolRef.current = {
         loaded: true,
@@ -190,13 +186,11 @@ export default function PhotoGrid({
       };
       return;
     }
-
     const [low, mid, high] = await Promise.all([
       fetchByLevel("low"),
       fetchByLevel("mid"),
       fetchByLevel("high"),
     ]);
-
     poolRef.current = {
       loaded: true,
       lastCategory: categoryTitle,
@@ -215,23 +209,19 @@ export default function PhotoGrid({
   const buildTurnDeck = useCallback(
     async (lv: "low" | "mid" | "high") => {
       setLoading(true);
-
       try {
         await ensurePoolLoaded();
-
         const source = poolRef.current[lv] ?? [];
         const sampled = pickRandomUnique(
           source,
           targetCount,
           usedIdsRef.current,
         );
-
         if (gameStarted && sampled.every((x) => x === null)) {
           toast("문제가 부족해요", {
             description: `${lv.toUpperCase()} 난이도 문제를 더 추가해줘!`,
           });
         }
-
         setTurnDeck(sampled);
       } catch (e) {
         console.error(e);
@@ -250,7 +240,6 @@ export default function PhotoGrid({
       setRevealed(Array(targetCount).fill(false));
       return;
     }
-
     if (!players.length) return;
     buildTurnDeck(activeLevel);
   }, [
@@ -263,41 +252,155 @@ export default function PhotoGrid({
     buildTurnDeck,
     targetCount,
   ]);
-  const pushWrong = (q: QuizData) => {
-    setWrongAnswers((prev) => {
-      return [
-        ...prev,
-        {
-          id: q.id,
-          question: q.question,
-          options: normalizeOptions(q.options),
-          answer: q.answer,
-          image_url: q.image_url ?? null,
-          category: (q.category as any) ?? categoryTitle,
-          level: String(q.level),
-          playerName: activePlayer?.name ?? "알 수 없음",
-        },
-      ];
-    });
+
+  /* ── 로깅 헬퍼 ── */
+
+  const currentPlayerInfo = () => {
+    const p = players[activeIndex];
+    return { playerId: p?.id, playerName: p?.name };
   };
-  const handleAnswerTeam = (slotIndex: number, correct: boolean) => {
-    if (!gameStarted || winner || players.length === 0) return;
+
+  const pushWrong = (q: QuizData) => {
+    setWrongAnswers((prev) => [
+      ...prev,
+      {
+        id: q.id,
+        question: q.question,
+        options: normalizeOptions(q.options),
+        answer: q.answer,
+        image_url: q.image_url ?? null,
+        category: (q.category as any) ?? categoryTitle,
+        level: String(q.level),
+        playerName: activePlayer?.name ?? "알 수 없음",
+      },
+    ]);
+  };
+
+  /* ══════════════════════════════════════
+     이벤트 흐름 (한 턴 안에서 동일한 turn_number)
+
+     turn_start       ← 턴 시작
+     card_shown       ← 카드 클릭 (FlipCard3D → onCardShown)
+     answer           ← 옵션 클릭 즉시 (FlipCard3D → onAnswer)
+     feedback_start   ← 옵션 클릭 즉시 (onAnswer 안에서)
+     feedback_end     ← 애니메이션 완료 후 (FlipCard3D → onCorrect/onWrong)
+     turn_end         ← 애니메이션 완료 후
+
+     → 게임 끝이면: game_end
+     → 계속이면: turn_number++, turn_start (다음 턴)
+  ══════════════════════════════════════ */
+
+  // ① 카드 클릭 → card_shown
+  const handleCardShown = (slotIndex: number) => {
+    const ts = nowISO();
+    cardShownAtRef.current = ts;
 
     const q = turnDeck[slotIndex];
+    pendingQuizRef.current = q;
+    const { playerId, playerName } = currentPlayerInfo();
+
+    logGameEvent({
+      turnNumber: turnNumberRef.current,
+      playerId,
+      playerName,
+      eventType: "card_shown",
+      quizId: q?.id,
+      question: q?.question,
+      correctAnswer: q?.answer,
+      category: categoryTitle,
+      level: activeLevel,
+      slotIndex,
+      eventAt: ts,
+    });
+  };
+
+  // ② 옵션 클릭 즉시 → answer + feedback_start
+  const handleAnswer = (
+    slotIndex: number,
+    selectedOption: string,
+    isCorrect: boolean,
+  ) => {
+    const responseAt = nowISO();
+    const q = pendingQuizRef.current;
+    const { playerId, playerName } = currentPlayerInfo();
+
+    let reactionTimeMs: number | undefined;
+    if (cardShownAtRef.current) {
+      reactionTimeMs =
+        new Date(responseAt).getTime() -
+        new Date(cardShownAtRef.current).getTime();
+    }
+
+    // answer
+    logGameEvent({
+      turnNumber: turnNumberRef.current,
+      playerId,
+      playerName,
+      eventType: "answer",
+      quizId: q?.id,
+      question: q?.question,
+      selectedOption,
+      correctAnswer: q?.answer,
+      isCorrect,
+      category: categoryTitle,
+      level: activeLevel,
+      slotIndex,
+      eventAt: responseAt,
+      reactionTimeMs,
+    });
+
+    // feedback_start
+    logGameEvent({
+      turnNumber: turnNumberRef.current,
+      playerId,
+      playerName,
+      eventType: "feedback_start",
+      quizId: q?.id,
+      isCorrect,
+      eventAt: nowISO(),
+      metadata: { feedback: isCorrect ? "정답" : "오답" },
+    });
+  };
+
+  // ③ 애니메이션 완료 → feedback_end + turn_end + (game_end or next turn_start)
+  const handleTurnEnd = (
+    slotIndex: number,
+    correct: boolean,
+    selectedOption: string,
+  ) => {
+    if (!gameStarted || winner || players.length === 0) return;
+
+    const q = pendingQuizRef.current;
     if (!q) return;
 
     usedIdsRef.current.add(q.id);
+    const { playerId, playerName } = currentPlayerInfo();
+
+    // feedback_end
+    logGameEvent({
+      turnNumber: turnNumberRef.current,
+      playerId,
+      playerName,
+      eventType: "feedback_end",
+      quizId: q.id,
+      isCorrect: correct,
+      eventAt: nowISO(),
+    });
+
+    // 상태 업데이트
+    let isGameOver = false;
 
     if (correct) {
-      setRevealed((prev) => {
-        const next = [...prev];
-        next[slotIndex] = true;
-        return next;
-      });
+      const newRevealed = [...revealed];
+      newRevealed[slotIndex] = true;
+      setRevealed(newRevealed);
+
+      if (newRevealed.every(Boolean)) {
+        isGameOver = true;
+      }
     } else {
       pushWrong(q);
 
-      // 틀린 슬롯에 새 문제 교체
       const source = poolRef.current[activeLevel] ?? [];
       const replacement = pickRandomUnique(source, 1, usedIdsRef.current);
       setTurnDeck((prev) => {
@@ -311,36 +414,58 @@ export default function PhotoGrid({
       });
     }
 
+    // turn_end
+    logGameEvent({
+      turnNumber: turnNumberRef.current,
+      playerId,
+      playerName,
+      eventType: "turn_end",
+      quizId: q.id,
+      isCorrect: correct,
+      eventAt: nowISO(),
+    });
+
+    if (isGameOver) {
+      // game_end (turn_end 후에 찍힘)
+      logGameEvent({
+        turnNumber: turnNumberRef.current,
+        eventType: "game_end",
+        category: categoryTitle,
+        level: activeLevel,
+        eventAt: nowISO(),
+        metadata: {
+          totalTurns: turnNumberRef.current,
+          wrongCount: wrongAnswers.length,
+        },
+      });
+
+      setWinner("협동 성공! (사진 완성)");
+      return; // 다음 turn_start 없음
+    }
+
+    // 다음 턴 시작
+    const nextIndex = players.length ? (activeIndex + 1) % players.length : 0;
+    turnNumberRef.current += 1;
+    cardShownAtRef.current = null;
+    pendingQuizRef.current = null;
+
+    logGameEvent({
+      turnNumber: turnNumberRef.current,
+      playerId: players[nextIndex]?.id,
+      playerName: players[nextIndex]?.name,
+      eventType: "turn_start",
+      category: categoryTitle,
+      level: activeLevel,
+      eventAt: nowISO(),
+    });
+
     advanceTurn();
   };
 
-  useEffect(() => {
-    if (!gameStarted) return;
-    if (!teamImageUrl) return;
-
-    if (revealed.length === targetCount && revealed.every(Boolean)) {
-      setWinner("협동 성공! (사진 완성)");
-    }
-  }, [gameStarted, teamImageUrl, revealed, targetCount]);
-
-  const restartGame = () => {
-    setWinner(null);
-    winnerSoundPlayedRef.current = false;
-    setActiveIndex(0);
-    setWrongAnswers([]);
-
-    usedIdsRef.current = new Set();
-    poolRef.current.loaded = false;
-
-    setTurnDeck(Array(targetCount).fill(null));
-    setRevealed(Array(targetCount).fill(false));
-    setRefreshKey((prev) => prev + 1);
-  };
+  /* ── winner 사운드/컨페티 (UI만, 로깅 아님) ── */
 
   useEffect(() => {
-    if (!winner) return;
-    if (winnerSoundPlayedRef.current) return;
-
+    if (!winner || winnerSoundPlayedRef.current) return;
     winnerSoundPlayedRef.current = true;
     sound.playWinner();
     sound.stopBgm();
@@ -348,12 +473,10 @@ export default function PhotoGrid({
 
   useEffect(() => {
     if (!winner || !canvasRef.current) return;
-
     const myConfetti = confetti.create(canvasRef.current, {
       resize: true,
       useWorker: true,
     });
-
     const interval = setInterval(() => {
       myConfetti({
         particleCount: 80,
@@ -367,9 +490,25 @@ export default function PhotoGrid({
         shapes: ["circle"],
       });
     }, 400);
-
     return () => clearInterval(interval);
   }, [winner]);
+
+  const restartGame = () => {
+    setWinner(null);
+    winnerSoundPlayedRef.current = false;
+    setActiveIndex(0);
+    setWrongAnswers([]);
+    usedIdsRef.current = new Set();
+    poolRef.current.loaded = false;
+    turnNumberRef.current = 0;
+    cardShownAtRef.current = null;
+    pendingQuizRef.current = null;
+    setTurnDeck(Array(targetCount).fill(null));
+    setRevealed(Array(targetCount).fill(false));
+    setRefreshKey((prev) => prev + 1);
+  };
+
+  /* ── winner 화면 ── */
 
   if (winner) {
     return (
@@ -381,7 +520,6 @@ export default function PhotoGrid({
         <div className="fixed inset-0 z-[1000000] flex flex-col items-center justify-center bg-black text-center text-white">
           <div className="mb-4 text-5xl font-bold">🎉 게임 종료 🎉</div>
           <div className="mb-6 text-3xl">{winner}</div>
-
           {teamImageUrl && (
             <img
               src={teamImageUrl}
@@ -389,7 +527,6 @@ export default function PhotoGrid({
               className="mb-6 max-h-[55vh] w-[min(720px,92vw)] rounded-2xl object-cover shadow-2xl"
             />
           )}
-
           <div className="flex flex-wrap items-center justify-center gap-3">
             <button
               onClick={() => window.location.reload()}
@@ -397,28 +534,20 @@ export default function PhotoGrid({
             >
               다시 시작
             </button>
-
             <button
               onClick={restartGame}
               className="rounded-xl bg-gray-700 px-6 py-3 font-bold text-white hover:bg-gray-600"
             >
               점수만 초기화
             </button>
-
             <button
               onClick={() => {
                 if (!wrongAnswers.length) {
                   toast("오답이 없어요 🎉", {});
                   return;
                 }
-
                 navigate("/wrong-review", {
-                  state: {
-                    wrongAnswers,
-                    categoryTitle,
-                    selectedLevel,
-                    accent,
-                  },
+                  state: { wrongAnswers, categoryTitle, selectedLevel, accent },
                 });
               }}
               className="rounded-xl px-6 py-3 font-bold text-white hover:opacity-90"
@@ -432,24 +561,24 @@ export default function PhotoGrid({
     );
   }
 
+  /* ── 이미지 업로드 ── */
+
   const uploadTeamImageIfNeeded = async (): Promise<string | null> => {
     if (!teamImageFile) return teamImagePreview;
-
     try {
       const path = `${participantId ?? "anon"}/${Date.now()}-${teamImageFile.name}`;
-
       const { error: upErr } = await supabase.storage
         .from("team-images")
         .upload(path, teamImageFile, { upsert: true });
-
       if (upErr) return teamImagePreview;
-
       const { data } = supabase.storage.from("team-images").getPublicUrl(path);
       return data.publicUrl ?? teamImagePreview;
     } catch {
       return teamImagePreview;
     }
   };
+
+  /* ── 게임 시작 ── */
 
   const minRequired = 2;
   const canStartBase = draftSelectedIds.length >= minRequired;
@@ -463,9 +592,11 @@ export default function PhotoGrid({
     sound.startBgm();
 
     setWrongAnswers([]);
-
     usedIdsRef.current = new Set();
     poolRef.current.loaded = false;
+    turnNumberRef.current = 0;
+    cardShownAtRef.current = null;
+    pendingQuizRef.current = null;
 
     setTurnDeck(Array(targetCount).fill(null));
     setRevealed(Array(targetCount).fill(false));
@@ -478,25 +609,56 @@ export default function PhotoGrid({
     const url = await uploadTeamImageIfNeeded();
     setTeamImageUrl(url ?? teamImagePreview);
 
-    setPlayers(
-      picked.map((p) => ({
-        id: p.id,
-        name: p.nickname,
-        level: p.level,
-      })),
-    );
+    const mappedPlayers = picked.map((p) => ({
+      id: p.id,
+      name: p.nickname,
+      level: p.level,
+    }));
 
+    setPlayers(mappedPlayers);
     setActiveIndex(0);
     setWinner(null);
     winnerSoundPlayedRef.current = false;
     setGameStarted(true);
     setShowPlayerModal(false);
     setRefreshKey((prev) => prev + 1);
+
+    // game_start (turn 0)
+    logGameEvent({
+      turnNumber: 0,
+      eventType: "game_start",
+      category: categoryTitle,
+      level: selectedLevel,
+      eventAt: nowISO(),
+      metadata: {
+        playerCount: picked.length,
+        cardCount: targetCount,
+        players: picked.map((p) => ({
+          id: p.id,
+          name: p.nickname,
+          level: p.level,
+        })),
+      },
+    });
+
+    // 첫 번째 turn_start (turn 1)
+    turnNumberRef.current = 1;
+    logGameEvent({
+      turnNumber: 1,
+      playerId: mappedPlayers[0]?.id,
+      playerName: mappedPlayers[0]?.name,
+      eventType: "turn_start",
+      category: categoryTitle,
+      level: selectedLevel,
+      eventAt: nowISO(),
+    });
   };
 
   const goBackToGameSelect = () => {
     setShowExitConfirm(true);
   };
+
+  /* ── 렌더링 ── */
 
   return (
     <div
@@ -531,10 +693,8 @@ export default function PhotoGrid({
               if (revealed[index]) {
                 const col = index % GRID_COLS;
                 const row = Math.floor(index / GRID_COLS);
-
                 const x = (col / Math.max(1, GRID_COLS - 1)) * 100;
                 const y = (row / Math.max(1, gridRows - 1)) * 100;
-
                 return (
                   <div
                     key={`piece-${index}`}
@@ -571,8 +731,10 @@ export default function PhotoGrid({
                   <FlipCard3D
                     quiz={quiz}
                     index={index}
-                    onCorrect={() => handleAnswerTeam(index, true)}
-                    onWrong={() => handleAnswerTeam(index, false)}
+                    onCardShown={handleCardShown}
+                    onAnswer={handleAnswer}
+                    onCorrect={(idx, opt) => handleTurnEnd(idx, true, opt)}
+                    onWrong={(idx, opt) => handleTurnEnd(idx, false, opt)}
                   />
                 </div>
               );
@@ -586,11 +748,7 @@ export default function PhotoGrid({
           {players.map((player, idx) => (
             <div
               key={player.id}
-              className={`flex flex-col items-center gap-3 rounded-xl p-4 shadow-lg backdrop-blur-md transition-colors ${
-                activeIndex === idx
-                  ? "scale-105 border-2 border-white bg-yellow-400/90"
-                  : "bg-sky-300/80"
-              }`}
+              className={`flex flex-col items-center gap-3 rounded-xl p-4 shadow-lg backdrop-blur-md transition-colors ${activeIndex === idx ? "scale-105 border-2 border-white bg-yellow-400/90" : "bg-sky-300/80"}`}
             >
               <div className="text-lg font-bold text-white">{player.name}</div>
             </div>
@@ -610,6 +768,7 @@ export default function PhotoGrid({
             >
               ×
             </button>
+
             {showExitConfirm && (
               <div className="absolute inset-0 z-[9999] flex items-start justify-center rounded-2xl bg-black/40 pt-[25%]">
                 <div className="rounded-2xl border bg-white px-6 py-5 shadow-2xl">
@@ -637,6 +796,7 @@ export default function PhotoGrid({
                 </div>
               </div>
             )}
+
             <h2 className="mb-1 text-center text-lg font-black">
               플레이어 선택
             </h2>
@@ -677,7 +837,6 @@ export default function PhotoGrid({
               <div className="mb-2 text-sm font-black text-gray-800">
                 협동 사진 등록
               </div>
-
               {teamImagePreview ? (
                 <div className="relative overflow-hidden rounded-xl">
                   <img
@@ -753,7 +912,6 @@ export default function PhotoGrid({
                   </button>
                 );
               })}
-
               {savedPlayers.length === 0 && (
                 <div className="py-6 text-center text-sm font-bold text-gray-400">
                   저장된 플레이어가 없습니다.
@@ -770,7 +928,6 @@ export default function PhotoGrid({
               >
                 초기화
               </button>
-
               <button
                 onClick={startGame}
                 disabled={!canStart}

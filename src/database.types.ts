@@ -44,6 +44,66 @@ export type Database = {
         }
         Relationships: []
       }
+      game_logs: {
+        Row: {
+          category: string | null
+          correct_answer: string | null
+          created_at: string | null
+          event_type: string
+          id: string
+          is_correct: boolean | null
+          level: string | null
+          metadata: Json | null
+          participant_id: string
+          player_id: string | null
+          player_name: string | null
+          question: string | null
+          quiz_id: number | null
+          selected_option: string | null
+          session_id: string
+          slot_index: number | null
+          turn_number: number
+        }
+        Insert: {
+          category?: string | null
+          correct_answer?: string | null
+          created_at?: string | null
+          event_type: string
+          id?: string
+          is_correct?: boolean | null
+          level?: string | null
+          metadata?: Json | null
+          participant_id: string
+          player_id?: string | null
+          player_name?: string | null
+          question?: string | null
+          quiz_id?: number | null
+          selected_option?: string | null
+          session_id: string
+          slot_index?: number | null
+          turn_number?: number
+        }
+        Update: {
+          category?: string | null
+          correct_answer?: string | null
+          created_at?: string | null
+          event_type?: string
+          id?: string
+          is_correct?: boolean | null
+          level?: string | null
+          metadata?: Json | null
+          participant_id?: string
+          player_id?: string | null
+          player_name?: string | null
+          question?: string | null
+          quiz_id?: number | null
+          selected_option?: string | null
+          session_id?: string
+          slot_index?: number | null
+          turn_number?: number
+        }
+        Relationships: []
+      }
       player_profiles: {
         Row: {
           created_at: string

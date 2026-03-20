@@ -1,9 +1,5 @@
 import { useMemo, useState } from "react";
-import {
-  getBorderClass,
-  CARD_COLORS,
-  type QuizData,
-} from "@/constants/photo-items";
+import { CARD_COLORS, type QuizData } from "@/constants/photo-items";
 import confetti from "canvas-confetti";
 
 import blue from "@/assets/image/blue.webp";
@@ -20,7 +16,7 @@ import black from "@/assets/image/black.webp";
 import correctSfx from "@/assets/sounds/correct.mp3";
 import wrongSfx from "@/assets/sounds/wrong.mp3";
 
-/* ── 뒷면(퀴즈): 카테고리별 테마 ── */
+/* ── 카테고리 테마 (뒷면) ── */
 
 type CoopThemeKey = "publicPlace" | "school" | "house" | "korean4" | "default";
 
@@ -42,7 +38,7 @@ function normalizeCategory(raw: any) {
 function getCoopTheme(rawCategory: any): CoopTheme {
   const c = normalizeCategory(rawCategory);
 
-  if (c.includes("public") || c.includes("공공")) {
+  if (c.includes("public") || c.includes("공공"))
     return {
       key: "publicPlace",
       gradientBorder:
@@ -53,9 +49,8 @@ function getCoopTheme(rawCategory: any): CoopTheme {
       optionBorder: "border-sky-200",
       optionHoverBg: "hover:bg-sky-100",
     };
-  }
 
-  if (c.includes("school") || c.includes("학교")) {
+  if (c.includes("school") || c.includes("학교"))
     return {
       key: "school",
       gradientBorder:
@@ -66,9 +61,8 @@ function getCoopTheme(rawCategory: any): CoopTheme {
       optionBorder: "border-amber-200",
       optionHoverBg: "hover:bg-amber-100",
     };
-  }
 
-  if (c.includes("house") || c.includes("가정")) {
+  if (c.includes("house") || c.includes("가정"))
     return {
       key: "house",
       gradientBorder:
@@ -79,9 +73,8 @@ function getCoopTheme(rawCategory: any): CoopTheme {
       optionBorder: "border-rose-200",
       optionHoverBg: "hover:bg-rose-100",
     };
-  }
 
-  if (c.includes("국어") || c.includes("korean")) {
+  if (c.includes("국어") || c.includes("korean"))
     return {
       key: "korean4",
       gradientBorder:
@@ -92,7 +85,6 @@ function getCoopTheme(rawCategory: any): CoopTheme {
       optionBorder: "border-purple-200",
       optionHoverBg: "hover:bg-purple-100",
     };
-  }
 
   return {
     key: "default",
@@ -104,11 +96,10 @@ function getCoopTheme(rawCategory: any): CoopTheme {
   };
 }
 
-/* ── 앞면: 카드별 랜덤 색상 기반 ── */
+/* ── 앞면 색상 ── */
 
 function getGradientBorderFromColorClass(colorClass: string) {
   const c = (colorClass || "").toLowerCase();
-
   if (c.includes("blue") || c.includes("sky") || c.includes("cyan"))
     return "bg-gradient-to-br from-[#003366] via-[#3366FF] to-[#99CCFF]";
   if (c.includes("yellow") || c.includes("amber"))
@@ -123,7 +114,6 @@ function getGradientBorderFromColorClass(colorClass: string) {
     return "bg-gradient-to-br from-[#3B0764] via-[#7C3AED] to-[#E9D5FF]";
   if (c.includes("red") || c.includes("rose") || c.includes("pink"))
     return "bg-gradient-to-br from-[#9D174D] via-[#EC4899] to-[#FBCFE8]";
-
   return "bg-gradient-to-br from-white/40 via-white/20 to-white/40";
 }
 
@@ -133,7 +123,6 @@ function pickRandom<T>(arr: T[]): T {
 
 function getFrontImageFromColorClass(colorClass: string) {
   const c = (colorClass || "").toLowerCase();
-
   if (c.includes("blue")) return blue;
   if (c.includes("sky")) return sky;
   if (c.includes("yellow") || c.includes("amber")) return yellow;
@@ -142,7 +131,6 @@ function getFrontImageFromColorClass(colorClass: string) {
   if (c.includes("red")) return red;
   if (c.includes("violet") || c.includes("purple")) return purple;
   if (c.includes("indigo")) return black;
-
   return pink;
 }
 
@@ -151,41 +139,46 @@ function getFrontImageFromColorClass(colorClass: string) {
 type FlipCard3DProps = {
   quiz: QuizData;
   index: number;
-  onCorrect?: () => void;
-  onWrong?: () => void;
+  onCardShown?: (index: number) => void;
+  /** 옵션 클릭 즉시 발동 (애니메이션 전) */
+  onAnswer?: (
+    index: number,
+    selectedOption: string,
+    isCorrect: boolean,
+  ) => void;
+  /** 정답 애니메이션 완료 후 발동 (800ms 후) */
+  onCorrect?: (index: number, selectedOption: string) => void;
+  /** 오답 애니메이션 완료 후 발동 (450ms 후) */
+  onWrong?: (index: number, selectedOption: string) => void;
 };
 
 export const FlipCard3D = ({
   quiz,
   index,
+  onCardShown,
+  onAnswer,
   onCorrect,
   onWrong,
 }: FlipCard3DProps) => {
-  /* 앞면: 카드마다 다른 색상 */
   const colorClass = useMemo(
     () => CARD_COLORS[index % CARD_COLORS.length],
     [index],
   );
-
   const frontGradientBorder = useMemo(
     () => getGradientBorderFromColorClass(colorClass),
     [colorClass],
   );
-
   const frontImage = useMemo(
     () => getFrontImageFromColorClass(colorClass),
     [colorClass],
   );
 
-  /* 뒷면: 카테고리 테마 */
   const coopTheme = useMemo(() => {
-    const rawCategory =
-      (quiz as any).category ?? (quiz as any).category_id ?? "";
-    return getCoopTheme(rawCategory);
+    const raw = (quiz as any).category ?? (quiz as any).category_id ?? "";
+    return getCoopTheme(raw);
   }, [quiz]);
 
   const displayImage = quiz.image_url || (quiz as any).image_url || null;
-
   const backFallbackImage = useMemo(
     () => getFrontImageFromColorClass(colorClass),
     [colorClass],
@@ -216,7 +209,6 @@ export const FlipCard3D = ({
   const [showOverlay, setShowOverlay] = useState(false);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
-
   const [wrongFlash, setWrongFlash] = useState(false);
   const [isShaking, setIsShaking] = useState(false);
   const [showExplosionVisual, setShowExplosionVisual] = useState(false);
@@ -228,7 +220,6 @@ export const FlipCard3D = ({
     a.volume = 0.9;
     return a;
   }, []);
-
   const wrongAudio = useMemo(() => {
     const a = new Audio(wrongSfx as unknown as string);
     a.preload = "auto";
@@ -241,7 +232,7 @@ export const FlipCard3D = ({
       a.pause();
       a.currentTime = 0;
       void a.play();
-    } catch {
+    } catch (e) {
       // ignore
     }
   };
@@ -252,6 +243,7 @@ export const FlipCard3D = ({
     setImgFailed(false);
     setIsFlipped(true);
     setTimeout(() => setShowOverlay(true), 10);
+    onCardShown?.(index);
   };
 
   const resetCardState = () => {
@@ -289,7 +281,6 @@ export const FlipCard3D = ({
   const triggerBomb = () => {
     setShowExplosionVisual(true);
     setTimeout(() => setShowExplosionVisual(false), 500);
-
     confetti({
       origin: { x: 0.5, y: 0.5 },
       zIndex: 10000,
@@ -306,64 +297,52 @@ export const FlipCard3D = ({
     });
   };
 
-  const triggerCorrect = () => {
-    playSound(correctAudio);
-    setFeedback("🍬 정답입니다!");
-    triggerConfetti();
-
-    setTimeout(() => {
-      setShowOverlay(false);
-      resetCardState();
-      onCorrect?.();
-    }, 800);
-  };
-
-  const triggerWrong = () => {
-    playSound(wrongAudio);
-    setFeedback("😢 펑! 오답입니다.");
-    setWrongFlash(true);
-    setIsShaking(true);
-    triggerBomb();
-
-    setTimeout(() => {
-      setWrongFlash(false);
-      setIsShaking(false);
-      setShowOverlay(false);
-      resetCardState();
-      onWrong?.();
-    }, 450);
-  };
-
   const handleOptionClick = (option: string) => {
     setSelectedAnswer(option);
-    if (option === quiz.answer) triggerCorrect();
-    else triggerWrong();
+    const isCorrect = option === quiz.answer;
+
+    // ① 즉시 발동 — 로깅용 (answer + feedback_start)
+    onAnswer?.(index, option, isCorrect);
+
+    // ② 애니메이션 + 딜레이 후 발동
+    if (isCorrect) {
+      playSound(correctAudio);
+      setFeedback("🍬 정답입니다!");
+      triggerConfetti();
+      setTimeout(() => {
+        setShowOverlay(false);
+        resetCardState();
+        onCorrect?.(index, option);
+      }, 800);
+    } else {
+      playSound(wrongAudio);
+      setFeedback("😢 펑! 오답입니다.");
+      setWrongFlash(true);
+      setIsShaking(true);
+      triggerBomb();
+      setTimeout(() => {
+        setWrongFlash(false);
+        setIsShaking(false);
+        setShowOverlay(false);
+        resetCardState();
+        onWrong?.(index, option);
+      }, 450);
+    }
   };
 
-  const isCorrect = feedback === "🍬 정답입니다!";
+  const isCorrectFeedback = feedback === "🍬 정답입니다!";
 
   return (
     <>
       <style>{`
-        @keyframes shake-bomb {
-          0%, 100% { transform: translateX(0) rotateY(180deg); }
-          10%,30%,50%,70%,90% { transform: translateX(-10px) rotateY(180deg); }
-          20%,40%,60%,80% { transform: translateX(10px) rotateY(180deg); }
-        }
+        @keyframes shake-bomb { 0%, 100% { transform: translateX(0) rotateY(180deg); } 10%,30%,50%,70%,90% { transform: translateX(-10px) rotateY(180deg); } 20%,40%,60%,80% { transform: translateX(10px) rotateY(180deg); } }
         .animate-shake-bomb { animation: shake-bomb 0.4s cubic-bezier(.36,.07,.19,.97) both; }
- 
-        @keyframes boom-scale {
-          0% { transform: scale(0.5); opacity: 0; }
-          50% { transform: scale(1.5); opacity: 1; }
-          100% { transform: scale(2.0); opacity: 0; }
-        }
+        @keyframes boom-scale { 0% { transform: scale(0.5); opacity: 0; } 50% { transform: scale(1.5); opacity: 1; } 100% { transform: scale(2.0); opacity: 0; } }
         .animate-boom { animation: boom-scale 0.4s ease-out forwards; }
- 
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
 
-      {/* 앞면 카드 — 카드마다 다른 색상 + 캐릭터 */}
       <div
         className="perspective-1000 relative h-full w-full cursor-pointer"
         onClick={handleClick}
@@ -385,7 +364,7 @@ export const FlipCard3D = ({
             {frontImage && (
               <img
                 src={frontImage}
-                alt={`카드 이미지: ${quiz.question}`}
+                alt={`카드: ${quiz.question}`}
                 className="absolute top-1/2 left-1/2 h-36 w-36 -translate-x-1/2 -translate-y-1/2 object-contain opacity-90"
                 loading="lazy"
                 onError={(e) => {
@@ -393,7 +372,6 @@ export const FlipCard3D = ({
                 }}
               />
             )}
-
             <div className="pointer-events-none absolute inset-0 opacity-12">
               <div className="absolute -top-10 -right-10 h-36 w-36 rounded-full bg-white" />
               <div className="absolute -bottom-10 -left-10 h-28 w-28 rounded-full bg-black" />
@@ -402,12 +380,9 @@ export const FlipCard3D = ({
         </div>
       </div>
 
-      {/* 뒷면 오버레이 — 카테고리 테마 */}
       {isFlipped && (
         <div
-          className={`fixed inset-0 z-[9999] flex items-center justify-center transition-opacity duration-500 ${
-            showOverlay ? "opacity-100" : "pointer-events-none opacity-0"
-          }`}
+          className={`fixed inset-0 z-[9999] flex items-center justify-center transition-opacity duration-500 ${showOverlay ? "opacity-100" : "pointer-events-none opacity-0"}`}
         >
           <div
             className="absolute inset-0 bg-black/80 backdrop-blur-sm"
@@ -424,9 +399,7 @@ export const FlipCard3D = ({
           )}
 
           <div
-            className={`transform-style-preserve-3d relative h-[95%] w-[95vw] max-w-6xl transition-transform duration-700 ${
-              showOverlay ? "rotate-y-180" : "rotate-y-0"
-            }`}
+            className={`transform-style-preserve-3d relative h-[95%] w-[95vw] max-w-6xl transition-transform duration-700 ${showOverlay ? "rotate-y-180" : "rotate-y-0"}`}
           >
             <div
               className={[
@@ -454,12 +427,11 @@ export const FlipCard3D = ({
                           ? displayImage
                           : backFallbackImage
                       }
-                      alt={`퀴즈 이미지: ${quiz.question}`}
+                      alt={`퀴즈: ${quiz.question}`}
                       className="mx-auto mb-4 max-h-[40vh] w-auto rounded-2xl object-contain shadow-2xl md:mb-7 md:max-h-96"
                       loading="eager"
                       onError={() => {
                         setImgFailed(true);
-                        console.error(`이미지 로드 실패: ${displayImage}`);
                       }}
                     />
                   ) : null}
@@ -471,20 +443,18 @@ export const FlipCard3D = ({
                   {safeOptions.length > 0 ? (
                     <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                       {safeOptions.map((option, i) => {
-                        const isSelected = selectedAnswer === option;
-                        const isAnswer = option === quiz.answer;
-
-                        const state = isSelected
-                          ? isAnswer
+                        const isSel = selectedAnswer === option;
+                        const isAns = option === quiz.answer;
+                        const st = isSel
+                          ? isAns
                             ? "border-emerald-300 bg-emerald-500 text-white shadow-inner"
                             : "scale-95 border-slate-900 bg-slate-900 text-slate-300 shadow-inner"
                           : `bg-white ${coopTheme.optionBorder} ${coopTheme.optionHoverBg} hover:shadow-lg`;
-
                         return (
                           <button
                             key={`${index}-${i}-${option}`}
                             onClick={() => handleOptionClick(option)}
-                            className={`rounded-2xl border-2 px-6 py-5 font-extrabold transition-all ${state}`}
+                            className={`rounded-2xl border-2 px-6 py-5 font-extrabold transition-all ${st}`}
                             style={getOptionTextStyle(option)}
                           >
                             {option}
@@ -500,11 +470,7 @@ export const FlipCard3D = ({
 
                   {feedback && (
                     <div
-                      className={`mt-8 text-3xl font-black ${
-                        isCorrect
-                          ? "animate-bounce text-yellow-400"
-                          : "text-white drop-shadow-md"
-                      }`}
+                      className={`mt-8 text-3xl font-black ${isCorrectFeedback ? "animate-bounce text-yellow-400" : "text-white drop-shadow-md"}`}
                     >
                       {feedback}
                     </div>
