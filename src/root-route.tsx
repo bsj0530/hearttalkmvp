@@ -2,8 +2,10 @@ import { Navigate, Route, Routes } from "react-router";
 import ExperimentHomePage from "./pages/ExperimentHomePage";
 import ParticipantInputPage from "./pages/ParticipantInputPage";
 import PlayersPage from "./pages/players-page";
+import QuizTemplatePage from "./pages/quizTemplatePage";
 import { useParticipant } from "@/store/participants";
 import GlobalLayout from "./components/layout/global-layout";
+import WrongReviewPage from "@/pages/WrongReviewPage";
 
 function RootEntry() {
   const participantId = useParticipant((state) => state.participantId);
@@ -27,14 +29,27 @@ function PlayersEntry() {
   return <PlayersPage />;
 }
 
+function QuizEntry() {
+  const participantId = useParticipant((state) => state.participantId);
+  const hasHydrated = useParticipant((state) => state._hasHydrated);
+
+  if (!hasHydrated) return null;
+  if (!participantId) return <Navigate to="/" replace />;
+
+  return <QuizTemplatePage />;
+}
+
 export default function RootRoute() {
   return (
     <Routes>
       <Route element={<GlobalLayout />}>
         <Route path="/" element={<RootEntry />} />
         <Route path="/players" element={<PlayersEntry />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
+      <Route path="/wrong-review" element={<WrongReviewPage />} />
+      <Route path="/quiz/:levelId/:categoryId" element={<QuizTemplatePage />} />
+
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }

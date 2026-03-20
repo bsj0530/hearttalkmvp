@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { IndexCategories } from "@/constants/index-categories";
 import { sound } from "@/lib/sound";
+import { useParticipant } from "@/store/participants";
 
 type Level = "low" | "mid" | "high";
 
@@ -110,29 +111,26 @@ function PlayerSummaryCard({ players }: { players: PlayerProfile[] }) {
 
 export default function ExperimentHomePage() {
   const navigate = useNavigate();
-  const { levelId = "low" } = useParams();
+  const { levelId = "low" } = useParams<{ levelId?: Level }>();
+  const participantId = useParticipant((state) => state.participantId);
 
   const { data: players = [] } = useQuery({
-    queryKey: ["players"],
+    queryKey: ["players", participantId],
     queryFn: async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user) return [];
+      if (!participantId) return [];
 
       const { data, error } = await supabase
         .from("player_profiles")
         .select("id,nickname,level,created_at")
-        .eq("user_id", user.id)
+        .eq("participant_id", participantId) // user_id → participant_id
         .order("created_at", { ascending: false });
 
       if (error) throw error;
       return (data ?? []) as PlayerProfile[];
     },
+    enabled: !!participantId,
     staleTime: 1000 * 30,
   });
-
   return (
     <div className="mx-auto flex min-h-[calc(100vh-100px)] w-full max-w-[1280px] flex-col px-6 pt-10 pb-12 md:px-8">
       <PlayerSummaryCard players={players} />
@@ -142,7 +140,7 @@ export default function ExperimentHomePage() {
           카테고리를 선택하세요
         </h1>
         <p className="mt-2 text-sm font-bold text-slate-500">
-          카드를 올리면 개인/협동을 선택할 수 있어요
+          카드를 클릭하면 바로 게임이 시작돼요
         </p>
       </div>
 
@@ -151,9 +149,15 @@ export default function ExperimentHomePage() {
           const s = CATEGORY_STYLE[category.id];
 
           return (
-            <div
+            <button
               key={category.id}
-              className={`group relative aspect-[9/12] w-full rounded-2xl p-[4px] shadow-md transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl ${s.borderGradient}`}
+              type="button"
+              onClick={() => {
+                sound.unlock();
+                sound.startBgm();
+                navigate(`/quiz/${levelId}/${category.id}`);
+              }}
+              className={`group relative aspect-[9/12] w-full cursor-pointer rounded-2xl p-[4px] text-left shadow-md transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.01] hover:shadow-xl active:scale-[0.99] ${s.borderGradient}`}
             >
               <div
                 className={`relative h-full w-full overflow-hidden rounded-[14px] p-6 ${s.innerBg}`}
@@ -172,33 +176,15 @@ export default function ExperimentHomePage() {
                   </div>
                 </div>
 
-                <div className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-3 bg-white/70 opacity-0 backdrop-blur-sm transition-all duration-300 group-hover:opacity-100">
-                  <button
-                    onClick={() => {
-                      sound.unlock();
-                      sound.startBgm();
-                      navigate(`/solo/${levelId}/category/${category.id}`);
-                    }}
-                    className={`w-[62%] rounded-xl bg-white py-2.5 text-lg font-black shadow-md transition hover:scale-[1.02] active:scale-[0.99] ${s.text}`}
-                  >
-                    개인
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      sound.unlock();
-                      sound.startBgm();
-                      navigate(`/team/${levelId}/category/${category.id}`);
-                    }}
-                    className={`w-[62%] rounded-xl bg-white py-2.5 text-lg font-black shadow-md transition hover:scale-[1.02] active:scale-[0.99] ${s.text}`}
-                  >
-                    협동
-                  </button>
+                <div className="pointer-events-none absolute inset-x-0 bottom-6 z-20 flex justify-center opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                  <div className="rounded-full bg-white/80 px-4 py-2 text-sm font-black text-slate-700 shadow-sm backdrop-blur">
+                    바로 시작
+                  </div>
                 </div>
 
                 <div className="pointer-events-none absolute inset-0 rounded-[14px] ring-1 ring-white/40" />
               </div>
-            </div>
+            </button>
           );
         })}
       </div>

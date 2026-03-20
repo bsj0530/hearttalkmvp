@@ -44,6 +44,69 @@ export type Database = {
         }
         Relationships: []
       }
+      player_profiles: {
+        Row: {
+          created_at: string
+          id: string
+          level: string
+          nickname: string
+          participant_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          level: string
+          nickname: string
+          participant_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          level?: string
+          nickname?: string
+          participant_id?: string
+        }
+        Relationships: []
+      }
+      quizzes: {
+        Row: {
+          answer: string
+          category: string
+          created_at: string
+          description: string | null
+          id: number
+          image_url: string | null
+          level: string
+          options: Json
+          question: string
+          updated_at: string
+        }
+        Insert: {
+          answer: string
+          category: string
+          created_at?: string
+          description?: string | null
+          id?: never
+          image_url?: string | null
+          level: string
+          options: Json
+          question: string
+          updated_at?: string
+        }
+        Update: {
+          answer?: string
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: never
+          image_url?: string | null
+          level?: string
+          options?: Json
+          question?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
