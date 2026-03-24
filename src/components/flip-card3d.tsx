@@ -13,12 +13,26 @@ import red from "@/assets/image/raddy.webp";
 import sky from "@/assets/image/sky.webp";
 import black from "@/assets/image/black.webp";
 
+import toad from "@/assets/image/toad.webp";
+import tails from "@/assets/image/tails.webp";
+import sonic from "@/assets/image/sonic.webp";
+import shadow from "@/assets/image/shadow.webp";
+import pickachu from "@/assets/image/pickachu.png";
+import nucles from "@/assets/image/nucles.webp";
+import frozen2 from "@/assets/image/frozen2.png";
+import frozen1 from "@/assets/image/frozen1.png";
+import fox2 from "@/assets/image/fox2.webp";
+import fox from "@/assets/image/fox.webp";
+import edy from "@/assets/image/edy.png";
+import doctor from "@/assets/image/doctor.webp";
+import deadpool from "@/assets/image/deadpool.webp";
+
 import correctSfx from "@/assets/sounds/correct.mp3";
 import wrongSfx from "@/assets/sounds/wrong.mp3";
 
 /* ── 카테고리 테마 (뒷면) ── */
 
-type CoopThemeKey = "publicPlace" | "school" | "house" | "korean4" | "default";
+type CoopThemeKey = "korean1" | "math1" | "korean2" | "math2" | "default";
 
 type CoopTheme = {
   key: CoopThemeKey;
@@ -38,9 +52,9 @@ function normalizeCategory(raw: any) {
 function getCoopTheme(rawCategory: any): CoopTheme {
   const c = normalizeCategory(rawCategory);
 
-  if (c.includes("public") || c.includes("공공"))
+  if (c.includes("korean1") || c.includes("국어1"))
     return {
-      key: "publicPlace",
+      key: "korean1",
       gradientBorder:
         "bg-gradient-to-br from-[#0B5ED7] via-[#3B82F6] to-[#BFE9FF]",
       overlayBorder: "border-sky-400",
@@ -50,9 +64,9 @@ function getCoopTheme(rawCategory: any): CoopTheme {
       optionHoverBg: "hover:bg-sky-100",
     };
 
-  if (c.includes("school") || c.includes("학교"))
+  if (c.includes("math1") || c.includes("수학1"))
     return {
-      key: "school",
+      key: "math1",
       gradientBorder:
         "bg-gradient-to-br from-[#B45309] via-[#F59E0B] to-[#FFE066]",
       overlayBorder: "border-amber-400",
@@ -62,9 +76,9 @@ function getCoopTheme(rawCategory: any): CoopTheme {
       optionHoverBg: "hover:bg-amber-100",
     };
 
-  if (c.includes("house") || c.includes("가정"))
+  if (c.includes("korean2") || c.includes("국어2"))
     return {
-      key: "house",
+      key: "korean2",
       gradientBorder:
         "bg-gradient-to-br from-[#FF4F8B] via-[#EC4899] to-[#FFD6D6]",
       overlayBorder: "border-rose-400",
@@ -74,9 +88,9 @@ function getCoopTheme(rawCategory: any): CoopTheme {
       optionHoverBg: "hover:bg-rose-100",
     };
 
-  if (c.includes("국어") || c.includes("korean"))
+  if (c.includes("math2") || c.includes("수학2"))
     return {
-      key: "korean4",
+      key: "math2",
       gradientBorder:
         "bg-gradient-to-br from-[#6D28D9] via-[#A78BFA] to-[#EDE9FE]",
       overlayBorder: "border-purple-400",
@@ -123,17 +137,18 @@ function pickRandom<T>(arr: T[]): T {
 
 function getFrontImageFromColorClass(colorClass: string) {
   const c = (colorClass || "").toLowerCase();
-  if (c.includes("blue")) return blue;
-  if (c.includes("sky")) return sky;
-  if (c.includes("yellow") || c.includes("amber")) return yellow;
-  if (c.includes("orange")) return orange;
-  if (c.includes("green")) return pickRandom([green, green2]);
-  if (c.includes("red")) return red;
-  if (c.includes("violet") || c.includes("purple")) return purple;
-  if (c.includes("indigo")) return black;
-  return pink;
+  if (c.includes("blue")) return pickRandom([blue, sonic, frozen1]);
+  if (c.includes("sky")) return pickRandom([sky, frozen2]);
+  if (c.includes("yellow") || c.includes("amber"))
+    return pickRandom([yellow, pickachu, tails]);
+  if (c.includes("orange")) return pickRandom([orange, fox, fox2, toad]);
+  if (c.includes("green")) return pickRandom([green, green2, nucles]);
+  if (c.includes("red")) return pickRandom([red, deadpool, shadow]);
+  if (c.includes("violet") || c.includes("purple"))
+    return pickRandom([purple, edy]);
+  if (c.includes("indigo")) return pickRandom([black, doctor]);
+  return pickRandom([pink, frozen1, frozen2]);
 }
-
 /* ── 컴포넌트 ── */
 
 type FlipCard3DProps = {
@@ -301,10 +316,8 @@ export const FlipCard3D = ({
     setSelectedAnswer(option);
     const isCorrect = option === quiz.answer;
 
-    // ① 즉시 발동 — 로깅용 (answer + feedback_start)
     onAnswer?.(index, option, isCorrect);
 
-    // ② 애니메이션 + 딜레이 후 발동
     if (isCorrect) {
       playSound(correctAudio);
       setFeedback("🍬 정답입니다!");
