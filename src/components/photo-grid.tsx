@@ -104,13 +104,13 @@ export default function PhotoGrid({
   useLayoutEffect(() => {
     const el = gridWrapRef.current;
     if (!el) return;
-    const GAP = 16;
-    const BOTTOM_SAFE = 24;
+    const GAP = 0;
+    const BOTTOM_SAFE = 13;
     const compute = () => {
       const rect = el.getBoundingClientRect();
       const available = window.innerHeight - rect.top - BOTTOM_SAFE;
       const h = (available - GAP * (gridRows - 1)) / gridRows;
-      setCardH(Math.max(160, Math.min(320, Math.floor(h))));
+      setCardH(Math.max(160, Math.min(400, Math.floor(h))));
       setGridReady(true);
     };
     compute();
@@ -141,7 +141,7 @@ export default function PhotoGrid({
 
   const activePlayer = players[activeIndex];
   const activeLevel: "low" | "mid" | "high" =
-    selectedLevel ?? activePlayer?.level ?? "mid";
+    activePlayer?.level ?? selectedLevel ?? "mid";
 
   useEffect(() => {
     if (gameStarted) return;
@@ -661,7 +661,7 @@ export default function PhotoGrid({
   return (
     <div
       ref={gridWrapRef}
-      className="relative mx-auto w-full max-w-[1200px] px-4 pb-8"
+      className="relative mx-auto w-full max-w-[1500px] px-4 pb-8"
     >
       {!gameStarted && (
         <div className="p-10 text-center text-xl font-black text-gray-600">
@@ -684,8 +684,8 @@ export default function PhotoGrid({
           </div>
         ) : (
           <div
-            className="grid w-full gap-4"
-            style={{ gridTemplateColumns: `repeat(${GRID_COLS}, 1fr)` }}
+            className="grid w-full"
+            style={{ gridTemplateColumns: `repeat(${GRID_COLS}, 1fr)`, gap: 0 }}
           >
             {parsedTurnDeck.map((quiz, index) => {
               if (revealed[index]) {
@@ -696,7 +696,6 @@ export default function PhotoGrid({
                 return (
                   <div
                     key={`piece-${index}`}
-                    className="rounded-2xl"
                     style={{
                       height: cardH,
                       backgroundImage: teamImageUrl
@@ -718,14 +717,18 @@ export default function PhotoGrid({
                 return (
                   <div
                     key={`empty-${index}`}
-                    className="rounded-2xl bg-white/30 ring-1 ring-white/40"
-                    style={{ height: cardH }}
-                  />
+                    style={{ height: cardH, padding: "6px" }}
+                  >
+                    <div className="h-full w-full rounded-2xl bg-white/30 ring-1 ring-white/40" />
+                  </div>
                 );
               }
 
               return (
-                <div key={`${quiz.id}-${index}`} style={{ height: cardH }}>
+                <div
+                  key={`${quiz.id}-${index}`}
+                  style={{ height: cardH, padding: "6px" }}
+                >
                   <FlipCard3D
                     quiz={quiz}
                     index={index}
@@ -742,13 +745,21 @@ export default function PhotoGrid({
       </div>
 
       {gameStarted && (
-        <div className="fixed right-6 bottom-6 z-[999999] flex flex-col items-end gap-4 select-none">
+        <div className="fixed top-[76px] left-6 z-[999999] flex flex-row items-center gap-3 select-none">
           {players.map((player, idx) => (
             <div
               key={player.id}
-              className={`flex flex-col items-center gap-3 rounded-xl p-4 shadow-lg backdrop-blur-md transition-colors ${activeIndex === idx ? "scale-105 border-2 border-white bg-yellow-400/90" : "bg-sky-300/80"}`}
+              className={`flex items-center justify-center rounded-full px-6 py-3 shadow-lg backdrop-blur-md transition-all duration-300 ${
+                activeIndex === idx
+                  ? "scale-110 border-3 border-white bg-yellow-400/90 ring-4 ring-yellow-300/50"
+                  : "bg-sky-300/80 opacity-70"
+              }`}
             >
-              <div className="text-lg font-bold text-white">{player.name}</div>
+              <div
+                className={`font-black text-white ${activeIndex === idx ? "text-2xl" : "text-lg"}`}
+              >
+                {player.name}
+              </div>
             </div>
           ))}
         </div>

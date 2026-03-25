@@ -70,12 +70,15 @@ export default function QuizTemplatePage() {
     );
   } else {
     renderBody = (
-      <div className="flex h-[calc(100vh-60px)] flex-col items-center overflow-hidden py-10">
-        <div className="mb-6 text-center">
-          <h1 className="text-6xl tracking-wide" style={{ color: theme.title }}>
+      <div className="flex h-[calc(100vh-60px)] flex-col items-center overflow-hidden py-4">
+        <div className="mb-3 text-center">
+          <h1
+            className="text-5xl font-bold tracking-wide"
+            style={{ color: theme.title }}
+          >
             {categoryInfo.title}
           </h1>
-          <p className="mt-4 text-2xl" style={{ color: theme.sub }}>
+          <p className="mt-2 text-xl" style={{ color: theme.sub }}>
             카드를 골라보세요
           </p>
         </div>

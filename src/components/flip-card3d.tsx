@@ -27,6 +27,23 @@ import edy from "@/assets/image/edy.png";
 import doctor from "@/assets/image/doctor.webp";
 import deadpool from "@/assets/image/deadpool.webp";
 
+import zzanggu from "@/assets/image/zzanggu.png";
+import yinagongju from "@/assets/image/yinagongju.webp";
+import simpsons from "@/assets/image/simpsons.webp";
+import PowerpuffGirls from "@/assets/image/PowerpuffGirls.webp";
+import pororo from "@/assets/image/pororo.webp";
+import pobi from "@/assets/image/pobi.webp";
+import pin from "@/assets/image/pin.svg";
+import Panda from "@/assets/image/Panda.webp";
+import MickeyMouse from "@/assets/image/MickeyMouse.svg";
+import loopy from "@/assets/image/loopy.webp";
+import jake from "@/assets/image/jake.svg";
+import hellokitty from "@/assets/image/hellokitty.webp";
+import frozen12 from "@/assets/image/frozen12.png";
+import croo from "@/assets/image/croo.webp";
+import bate from "@/assets/image/bate.webp";
+import backsulgongju from "@/assets/image/backsulgongju.webp";
+
 import correctSfx from "@/assets/sounds/correct.mp3";
 import wrongSfx from "@/assets/sounds/wrong.mp3";
 
@@ -41,6 +58,7 @@ type CoopTheme = {
   topGlow: string;
   optionBorder: string;
   optionHoverBg: string;
+  blankBg: string;
 };
 
 function normalizeCategory(raw: any) {
@@ -62,6 +80,7 @@ function getCoopTheme(rawCategory: any): CoopTheme {
         "bg-gradient-to-r from-sky-500/25 via-blue-500/20 to-cyan-500/25",
       optionBorder: "border-sky-200",
       optionHoverBg: "hover:bg-sky-100",
+      blankBg: "bg-sky-100",
     };
 
   if (c.includes("math1") || c.includes("수학1"))
@@ -74,6 +93,7 @@ function getCoopTheme(rawCategory: any): CoopTheme {
         "bg-gradient-to-r from-amber-500/25 via-yellow-400/25 to-orange-400/20",
       optionBorder: "border-amber-200",
       optionHoverBg: "hover:bg-amber-100",
+      blankBg: "bg-amber-100",
     };
 
   if (c.includes("korean2") || c.includes("국어2"))
@@ -86,6 +106,7 @@ function getCoopTheme(rawCategory: any): CoopTheme {
         "bg-gradient-to-r from-rose-500/25 via-pink-500/20 to-fuchsia-500/20",
       optionBorder: "border-rose-200",
       optionHoverBg: "hover:bg-rose-100",
+      blankBg: "bg-rose-100",
     };
 
   if (c.includes("math2") || c.includes("수학2"))
@@ -98,6 +119,7 @@ function getCoopTheme(rawCategory: any): CoopTheme {
         "bg-gradient-to-r from-purple-500/25 via-violet-400/20 to-fuchsia-500/20",
       optionBorder: "border-purple-200",
       optionHoverBg: "hover:bg-purple-100",
+      blankBg: "bg-purple-100",
     };
 
   return {
@@ -107,6 +129,7 @@ function getCoopTheme(rawCategory: any): CoopTheme {
     topGlow: "bg-gradient-to-r from-white/20 via-white/10 to-white/20",
     optionBorder: "border-slate-200",
     optionHoverBg: "hover:bg-slate-100",
+    blankBg: "bg-slate-100",
   };
 }
 
@@ -137,33 +160,35 @@ function pickRandom<T>(arr: T[]): T {
 
 function getFrontImageFromColorClass(colorClass: string) {
   const c = (colorClass || "").toLowerCase();
-  if (c.includes("blue")) return pickRandom([blue, sonic, frozen1]);
-  if (c.includes("sky")) return pickRandom([sky, frozen2]);
+  if (c.includes("blue"))
+    return pickRandom([blue, sonic, frozen1, frozen12, pororo, MickeyMouse]);
+  if (c.includes("sky"))
+    return pickRandom([sky, frozen2, backsulgongju, hellokitty]);
   if (c.includes("yellow") || c.includes("amber"))
-    return pickRandom([yellow, pickachu, tails]);
-  if (c.includes("orange")) return pickRandom([orange, fox, fox2, toad]);
-  if (c.includes("green")) return pickRandom([green, green2, nucles]);
-  if (c.includes("red")) return pickRandom([red, deadpool, shadow]);
+    return pickRandom([yellow, pickachu, tails, jake, simpsons, pobi]);
+  if (c.includes("orange"))
+    return pickRandom([orange, fox, fox2, toad, croo, zzanggu]);
+  if (c.includes("green")) return pickRandom([green, green2, nucles, Panda]);
+  if (c.includes("red"))
+    return pickRandom([red, deadpool, shadow, PowerpuffGirls, loopy]);
   if (c.includes("violet") || c.includes("purple"))
-    return pickRandom([purple, edy]);
-  if (c.includes("indigo")) return pickRandom([black, doctor]);
-  return pickRandom([pink, frozen1, frozen2]);
+    return pickRandom([purple, edy, yinagongju, pin]);
+  if (c.includes("indigo")) return pickRandom([black, doctor, bate]);
+  return pickRandom([pink, frozen1, frozen2, hellokitty]);
 }
+
 /* ── 컴포넌트 ── */
 
 type FlipCard3DProps = {
   quiz: QuizData;
   index: number;
   onCardShown?: (index: number) => void;
-  /** 옵션 클릭 즉시 발동 (애니메이션 전) */
   onAnswer?: (
     index: number,
     selectedOption: string,
     isCorrect: boolean,
   ) => void;
-  /** 정답 애니메이션 완료 후 발동 (800ms 후) */
   onCorrect?: (index: number, selectedOption: string) => void;
-  /** 오답 애니메이션 완료 후 발동 (450ms 후) */
   onWrong?: (index: number, selectedOption: string) => void;
 };
 
@@ -176,8 +201,8 @@ export const FlipCard3D = ({
   onWrong,
 }: FlipCard3DProps) => {
   const colorClass = useMemo(
-    () => CARD_COLORS[index % CARD_COLORS.length],
-    [index],
+    () => CARD_COLORS[Math.floor(Math.random() * CARD_COLORS.length)],
+    [quiz?.id],
   );
   const frontGradientBorder = useMemo(
     () => getGradientBorderFromColorClass(colorClass),
@@ -194,10 +219,6 @@ export const FlipCard3D = ({
   }, [quiz]);
 
   const displayImage = quiz.image_url || (quiz as any).image_url || null;
-  const backFallbackImage = useMemo(
-    () => getFrontImageFromColorClass(colorClass),
-    [colorClass],
-  );
 
   const safeOptions: string[] = (() => {
     if (Array.isArray(quiz.options)) return quiz.options.map(String);
@@ -228,6 +249,7 @@ export const FlipCard3D = ({
   const [isShaking, setIsShaking] = useState(false);
   const [showExplosionVisual, setShowExplosionVisual] = useState(false);
   const [imgFailed, setImgFailed] = useState(false);
+  const [typedAnswer, setTypedAnswer] = useState("");
 
   const correctAudio = useMemo(() => {
     const a = new Audio(correctSfx as unknown as string);
@@ -269,6 +291,7 @@ export const FlipCard3D = ({
     setIsShaking(false);
     setShowExplosionVisual(false);
     setImgFailed(false);
+    setTypedAnswer("");
   };
 
   const handleClose = (e?: React.MouseEvent) => {
@@ -339,6 +362,38 @@ export const FlipCard3D = ({
         setShowOverlay(false);
         resetCardState();
         onWrong?.(index, option);
+      }, 450);
+    }
+  };
+
+  const handleTypingSubmit = () => {
+    const trimmed = typedAnswer.trim();
+    if (!trimmed) return;
+    const isCorrect = trimmed === quiz.answer;
+
+    onAnswer?.(index, trimmed, isCorrect);
+
+    if (isCorrect) {
+      playSound(correctAudio);
+      setFeedback("🍬 정답입니다!");
+      triggerConfetti();
+      setTimeout(() => {
+        setShowOverlay(false);
+        resetCardState();
+        onCorrect?.(index, trimmed);
+      }, 800);
+    } else {
+      playSound(wrongAudio);
+      setFeedback("😢 펑! 오답입니다.");
+      setWrongFlash(true);
+      setIsShaking(true);
+      triggerBomb();
+      setTimeout(() => {
+        setWrongFlash(false);
+        setIsShaking(false);
+        setShowOverlay(false);
+        resetCardState();
+        onWrong?.(index, trimmed);
       }, 450);
     }
   };
@@ -422,9 +477,13 @@ export const FlipCard3D = ({
                 isShaking ? "animate-shake-bomb" : "",
               ].join(" ")}
             >
-              <div className={`h-4 w-full ${coopTheme.topGlow}`} />
-
-              <div className="relative flex min-h-full flex-col items-center justify-start p-6 md:p-10">
+              <div
+                className={`relative flex min-h-full flex-col items-center p-6 md:p-10 ${
+                  displayImage && !imgFailed
+                    ? "justify-start"
+                    : "justify-center"
+                }`}
+              >
                 <button
                   onClick={handleClose}
                   className="absolute top-6 right-6 z-50 rounded-full bg-black/10 px-3 py-2 text-lg font-black hover:bg-black/20"
@@ -432,14 +491,10 @@ export const FlipCard3D = ({
                   ✕
                 </button>
 
-                <div className="mt-4 w-full max-w-5xl text-center">
-                  {(displayImage && !imgFailed) || backFallbackImage ? (
+                <div className="w-full max-w-5xl text-center">
+                  {displayImage && !imgFailed ? (
                     <img
-                      src={
-                        displayImage && !imgFailed
-                          ? displayImage
-                          : backFallbackImage
-                      }
+                      src={displayImage}
                       alt={`퀴즈: ${quiz.question}`}
                       className="mx-auto mb-4 max-h-[40vh] w-auto rounded-2xl object-contain shadow-2xl md:mb-7 md:max-h-96"
                       loading="eager"
@@ -449,8 +504,29 @@ export const FlipCard3D = ({
                     />
                   ) : null}
 
-                  <h2 className="mb-6 px-2 text-3xl leading-snug font-extrabold break-keep md:mb-8 md:text-4xl">
-                    {quiz.question}
+                  <h2
+                    className={`px-2 font-extrabold break-keep ${
+                      displayImage && !imgFailed
+                        ? "mb-6 text-3xl leading-snug md:mb-8 md:text-4xl"
+                        : "mb-10 text-4xl leading-relaxed md:mb-12 md:text-5xl"
+                    }`}
+                  >
+                    {quiz.question.split("___").map((part, i, arr) => (
+                      <span key={i}>
+                        {part}
+                        {i < arr.length - 1 && (
+                          <span
+                            className={`mx-2 inline-block rounded-lg border-2 align-middle ${
+                              coopTheme.optionBorder
+                            } ${coopTheme.blankBg} ${
+                              displayImage && !imgFailed
+                                ? "h-12 w-28"
+                                : "h-14 w-32"
+                            }`}
+                          />
+                        )}
+                      </span>
+                    ))}
                   </h2>
 
                   {safeOptions.length > 0 ? (
@@ -476,8 +552,62 @@ export const FlipCard3D = ({
                       })}
                     </div>
                   ) : (
-                    <div className="text-lg text-slate-700">
-                      보기 데이터가 없어요.
+                    <div className="flex flex-col items-center gap-6">
+                      <div
+                        className={`flex min-h-[72px] w-full max-w-lg items-center justify-center rounded-2xl border-4 px-8 py-5 text-4xl font-extrabold ${coopTheme.optionBorder} ${coopTheme.blankBg}`}
+                      >
+                        {typedAnswer || (
+                          <span className="text-slate-300">
+                            정답을 입력하세요
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="grid w-full max-w-lg grid-cols-4 gap-3">
+                        {[
+                          "1",
+                          "2",
+                          "3",
+                          "<",
+                          "4",
+                          "5",
+                          "6",
+                          ">",
+                          "7",
+                          "8",
+                          "9",
+                          "=",
+                        ].map((key) => (
+                          <button
+                            key={key}
+                            onClick={() => setTypedAnswer((prev) => prev + key)}
+                            className={`rounded-xl border-2 py-4 text-3xl font-black transition-all active:scale-95 ${coopTheme.optionBorder} ${coopTheme.optionHoverBg} bg-white`}
+                          >
+                            {key}
+                          </button>
+                        ))}
+                        <button
+                          onClick={() => setTypedAnswer((prev) => prev + "0")}
+                          className={`col-span-2 rounded-xl border-2 py-4 text-3xl font-black transition-all active:scale-95 ${coopTheme.optionBorder} ${coopTheme.optionHoverBg} bg-white`}
+                        >
+                          0
+                        </button>
+                        <button
+                          onClick={() =>
+                            setTypedAnswer((prev) => prev.slice(0, -1))
+                          }
+                          className="rounded-xl border-2 border-slate-300 bg-slate-100 py-4 text-2xl font-black transition-all hover:bg-slate-200 active:scale-95"
+                        >
+                          ⌫
+                        </button>
+                        <button
+                          onClick={handleTypingSubmit}
+                          disabled={!typedAnswer.trim()}
+                          className={`rounded-xl py-4 text-2xl font-black text-white transition-all active:scale-95 disabled:opacity-40 ${coopTheme.gradientBorder}`}
+                        >
+                          확인
+                        </button>
+                      </div>
                     </div>
                   )}
 
