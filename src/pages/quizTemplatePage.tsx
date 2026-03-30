@@ -13,10 +13,10 @@ const CATEGORY_THEME: Record<
   string,
   { bg: string; title: string; sub: string }
 > = {
-  korean1: { bg: "#BFE9FF", title: "#0B5ED7", sub: "#3366FF" },
-  math1: { bg: "#FFE066", title: "#FF8C00", sub: "#F59E0B" },
-  korean2: { bg: "#FFD6D6", title: "#FF4F8B", sub: "#EC4899" },
-  math2: { bg: "#e2cbf6", title: "#6D28D9", sub: "#A78BFA" },
+  chapter1: { bg: "#BFE9FF", title: "#0B5ED7", sub: "#3366FF" },
+  chapter2: { bg: "#FFE066", title: "#FF8C00", sub: "#F59E0B" },
+  chapter3: { bg: "#FFD6D6", title: "#FF4F8B", sub: "#EC4899" },
+  chapter4: { bg: "#e2cbf6", title: "#6D28D9", sub: "#A78BFA" },
 };
 export default function QuizTemplatePage() {
   const { levelId, categoryId } = useParams() as {
@@ -84,7 +84,7 @@ export default function QuizTemplatePage() {
         </div>
 
         <PhotoGrid
-          categoryTitle={categoryInfo.title}
+          categoryTitle={categoryInfo.id}
           selectedLevel={levelId}
           titleColor={theme.title}
         />

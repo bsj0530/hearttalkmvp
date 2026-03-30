@@ -2,16 +2,13 @@ import { useMemo, useState } from "react";
 import { CARD_COLORS, type QuizData } from "@/constants/photo-items";
 import confetti from "canvas-confetti";
 
-import blue from "@/assets/image/blue.webp";
-import yellow from "@/assets/image/yellow.webp";
-import pink from "@/assets/image/pink.webp";
-import purple from "@/assets/image/purple.webp";
-import green from "@/assets/image/green.webp";
-import green2 from "@/assets/image/green2.webp";
-import orange from "@/assets/image/oren.webp";
-import red from "@/assets/image/raddy.webp";
-import sky from "@/assets/image/sky.webp";
-import black from "@/assets/image/black.webp";
+import kittyisland2 from "@/assets/image/kittyisland2.png";
+import hindoongyi from "@/assets/image/hindoongyi.webp";
+import doraamog from "@/assets/image/doraamog.webp";
+import bulibuli from "@/assets/image/bulibuli.svg";
+import ironman from "@/assets/image/ironman.webp";
+import hurk from "@/assets/image/hurk.png";
+import joker from "@/assets/image/joker.png";
 
 import toad from "@/assets/image/toad.webp";
 import tails from "@/assets/image/tails.webp";
@@ -38,18 +35,28 @@ import Panda from "@/assets/image/Panda.webp";
 import MickeyMouse from "@/assets/image/MickeyMouse.svg";
 import loopy from "@/assets/image/loopy.webp";
 import jake from "@/assets/image/jake.svg";
-import hellokitty from "@/assets/image/hellokitty.webp";
 import frozen12 from "@/assets/image/frozen12.png";
-import croo from "@/assets/image/croo.webp";
 import bate from "@/assets/image/bate.webp";
 import backsulgongju from "@/assets/image/backsulgongju.webp";
+
+/* ── 새 캐릭터 ── */
+import zooble from "@/assets/image/zooble.png";
+import Pomni from "@/assets/image/Pomni.webp";
+import Kaufmo from "@/assets/image/Kaufmo.webp";
+import Jax from "@/assets/image/Jax.png";
+import girl from "@/assets/image/girl.png";
 
 import correctSfx from "@/assets/sounds/correct.mp3";
 import wrongSfx from "@/assets/sounds/wrong.mp3";
 
 /* ── 카테고리 테마 (뒷면) ── */
 
-type CoopThemeKey = "korean1" | "math1" | "korean2" | "math2" | "default";
+type CoopThemeKey =
+  | "chapter1"
+  | "chapter2"
+  | "chapter3"
+  | "chapter4"
+  | "default";
 
 type CoopTheme = {
   key: CoopThemeKey;
@@ -70,9 +77,9 @@ function normalizeCategory(raw: any) {
 function getCoopTheme(rawCategory: any): CoopTheme {
   const c = normalizeCategory(rawCategory);
 
-  if (c.includes("korean1") || c.includes("국어1"))
+  if (c.includes("chapter1"))
     return {
-      key: "korean1",
+      key: "chapter1",
       gradientBorder:
         "bg-gradient-to-br from-[#0B5ED7] via-[#3B82F6] to-[#BFE9FF]",
       overlayBorder: "border-sky-400",
@@ -83,9 +90,9 @@ function getCoopTheme(rawCategory: any): CoopTheme {
       blankBg: "bg-sky-100",
     };
 
-  if (c.includes("math1") || c.includes("수학1"))
+  if (c.includes("chapter2"))
     return {
-      key: "math1",
+      key: "chapter2",
       gradientBorder:
         "bg-gradient-to-br from-[#B45309] via-[#F59E0B] to-[#FFE066]",
       overlayBorder: "border-amber-400",
@@ -96,9 +103,9 @@ function getCoopTheme(rawCategory: any): CoopTheme {
       blankBg: "bg-amber-100",
     };
 
-  if (c.includes("korean2") || c.includes("국어2"))
+  if (c.includes("chapter3"))
     return {
-      key: "korean2",
+      key: "chapter3",
       gradientBorder:
         "bg-gradient-to-br from-[#FF4F8B] via-[#EC4899] to-[#FFD6D6]",
       overlayBorder: "border-rose-400",
@@ -109,9 +116,9 @@ function getCoopTheme(rawCategory: any): CoopTheme {
       blankBg: "bg-rose-100",
     };
 
-  if (c.includes("math2") || c.includes("수학2"))
+  if (c.includes("chapter4"))
     return {
-      key: "math2",
+      key: "chapter4",
       gradientBorder:
         "bg-gradient-to-br from-[#6D28D9] via-[#A78BFA] to-[#EDE9FE]",
       overlayBorder: "border-purple-400",
@@ -161,22 +168,38 @@ function pickRandom<T>(arr: T[]): T {
 function getFrontImageFromColorClass(colorClass: string) {
   const c = (colorClass || "").toLowerCase();
   if (c.includes("blue"))
-    return pickRandom([blue, sonic, frozen1, frozen12, pororo, MickeyMouse]);
+    return pickRandom([
+      sonic,
+      frozen1,
+      frozen12,
+      pororo,
+      MickeyMouse,
+      Pomni,
+      bulibuli,
+    ]);
   if (c.includes("sky"))
-    return pickRandom([sky, frozen2, backsulgongju, hellokitty]);
+    return pickRandom([frozen2, backsulgongju, girl, kittyisland2]);
   if (c.includes("yellow") || c.includes("amber"))
-    return pickRandom([yellow, pickachu, tails, jake, simpsons, pobi]);
+    return pickRandom([pickachu, tails, jake, simpsons, pobi, Jax, hindoongyi]);
   if (c.includes("orange"))
-    return pickRandom([orange, fox, fox2, toad, croo, zzanggu]);
-  if (c.includes("green")) return pickRandom([green, green2, nucles, Panda]);
+    return pickRandom([fox, fox2, toad, zzanggu, Kaufmo, doraamog]);
+  if (c.includes("green"))
+    return pickRandom([nucles, Panda, bulibuli, hurk, joker]);
   if (c.includes("red"))
-    return pickRandom([red, deadpool, shadow, PowerpuffGirls, loopy]);
+    return pickRandom([
+      deadpool,
+      shadow,
+      PowerpuffGirls,
+      loopy,
+      zooble,
+      doraamog,
+      ironman,
+    ]);
   if (c.includes("violet") || c.includes("purple"))
-    return pickRandom([purple, edy, yinagongju, pin]);
-  if (c.includes("indigo")) return pickRandom([black, doctor, bate]);
-  return pickRandom([pink, frozen1, frozen2, hellokitty]);
+    return pickRandom([edy, yinagongju, pin, Pomni, kittyisland2]);
+  if (c.includes("indigo")) return pickRandom([doctor, bate, Jax, hindoongyi]);
+  return pickRandom([frozen1, frozen2, girl]);
 }
-
 /* ── 컴포넌트 ── */
 
 type FlipCard3DProps = {

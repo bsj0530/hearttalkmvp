@@ -277,21 +277,6 @@ export default function PhotoGrid({
     ]);
   };
 
-  /* ══════════════════════════════════════
-     이벤트 흐름 (한 턴 = 동일 turn_number)
- 
-     turn_start       ← 카드 클릭 직전 (실제 행동 시작)
-     card_shown       ← 카드 클릭 (문제 표시)
-     answer           ← 옵션 클릭 즉시
-     feedback_start   ← 옵션 클릭 즉시
-     feedback_end     ← 애니메이션 완료 후
-     turn_end         ← 애니메이션 완료 후
- 
-     → 게임 끝이면: game_end
-     → 계속이면: turn_number++ (다음 카드 클릭 시 turn_start)
-  ══════════════════════════════════════ */
-
-  // ① 카드 클릭 → (turn_start) + card_shown
   const handleCardShown = (slotIndex: number) => {
     const { playerId, playerName } = currentPlayerInfo();
 
@@ -570,17 +555,8 @@ export default function PhotoGrid({
 
   const uploadTeamImageIfNeeded = async (): Promise<string | null> => {
     if (!teamImageFile) return teamImagePreview;
-    try {
-      const path = `${participantId ?? "anon"}/${Date.now()}-${teamImageFile.name}`;
-      const { error: upErr } = await supabase.storage
-        .from("team-images")
-        .upload(path, teamImageFile, { upsert: true });
-      if (upErr) return teamImagePreview;
-      const { data } = supabase.storage.from("team-images").getPublicUrl(path);
-      return data.publicUrl ?? teamImagePreview;
-    } catch {
-      return teamImagePreview;
-    }
+    // 업로드 실패해도 로컬 미리보기로 진행
+    return teamImagePreview;
   };
 
   /* ── 게임 시작 ── */
