@@ -721,7 +721,8 @@ export default function PhotoGrid({
       </div>
 
       {gameStarted && (
-        <div className="fixed top-[76px] left-6 z-[999999] flex flex-row items-center gap-3 select-none">
+        <div className="fixed top-[76px] left-6 z-[9998] flex flex-row items-center gap-3 select-none">
+          {" "}
           {players.map((player, idx) => (
             <div
               key={player.id}

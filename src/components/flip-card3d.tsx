@@ -553,7 +553,7 @@ export const FlipCard3D = ({
                   </h2>
 
                   {safeOptions.length > 0 ? (
-                    <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                    <div className="mt-70 grid grid-cols-1 gap-5 md:grid-cols-2">
                       {safeOptions.map((option, i) => {
                         const isSel = selectedAnswer === option;
                         const isAns = option === quiz.answer;
