@@ -508,15 +508,16 @@ export default function PhotoGrid({
           className="pointer-events-none fixed top-0 left-0 z-[2000000] h-screen w-screen"
         />
         <div className="fixed inset-0 z-[1000000] flex flex-col items-center justify-center bg-black text-center text-white">
-          <div className="mb-4 text-5xl font-bold">🎉 게임 종료 🎉</div>
-          <div className="mb-6 text-3xl">{winner}</div>
+          <div className="mb-2 text-3xl font-bold">🎉 게임 종료 🎉</div>
+          <div className="mb-3 text-xl">{winner}</div>
           {teamImageUrl && (
             <img
               src={teamImageUrl}
               alt="result"
-              className="mb-6 max-h-[55vh] w-[min(720px,92vw)] rounded-2xl object-cover shadow-2xl"
+              className="mb-6 max-h-[80vh] w-[min(1100px,96vw)] rounded-2xl object-cover shadow-2xl"
             />
           )}
+          ㄴ
           <div className="flex flex-wrap items-center justify-center gap-3">
             <button
               onClick={() => window.location.reload()}
@@ -795,7 +796,7 @@ export default function PhotoGrid({
                 카드 수(퍼즐 조각 수)
               </div>
               <div className="flex gap-2">
-                {[5, 10, 15].map((n) => {
+                {[6, 12, 18].map((n) => {
                   const selected = teamCardCount === n;
                   return (
                     <button
