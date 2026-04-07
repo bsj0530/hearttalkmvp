@@ -1,17 +1,5 @@
 export type Level = "low" | "mid" | "high";
 
-export type Player = {
-  id: string;
-  name: string;
-  level: "low" | "mid" | "high";
-};
-
-export type PlayerProfile = {
-  id: string;
-  nickname: string;
-  level: "low" | "mid" | "high";
-};
-
 export type WrongItem = {
   id: number;
   question: string;
@@ -28,3 +16,17 @@ export interface PhotoGridProps {
   selectedLevel: Level;
   titleColor?: string;
 }
+
+export type Player = {
+  id: string;
+  name: string;
+  level: "low" | "mid" | "high";
+  low_mode?: "voice" | "text";
+};
+
+export type PlayerProfile = {
+  id: string;
+  nickname: string;
+  level: "low" | "mid" | "high";
+  low_mode?: "voice" | "text";
+};

@@ -200,11 +200,26 @@ function getFrontImageFromColorClass(colorClass: string) {
   if (c.includes("indigo")) return pickRandom([doctor, bate, Jax, hindoongyi]);
   return pickRandom([frozen1, frozen2, girl]);
 }
+
+/* ── TTS 헬퍼 ── */
+
+function speakKorean(text: string) {
+  if (!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const utter = new SpeechSynthesisUtterance(text.replace(/___/g, "빈칸"));
+  utter.lang = "ko-KR";
+  utter.rate = 0.85;
+  utter.pitch = 1.0;
+  window.speechSynthesis.speak(utter);
+}
+
 /* ── 컴포넌트 ── */
 
 type FlipCard3DProps = {
   quiz: QuizData;
   index: number;
+  lowMode?: "voice" | "text";
+  disabled?: boolean;
   onCardShown?: (index: number) => void;
   onAnswer?: (
     index: number,
@@ -218,11 +233,17 @@ type FlipCard3DProps = {
 export const FlipCard3D = ({
   quiz,
   index,
+  lowMode = "text",
+  disabled = false,
   onCardShown,
   onAnswer,
   onCorrect,
   onWrong,
 }: FlipCard3DProps) => {
+  const isVoiceMode =
+    lowMode === "voice" &&
+    String((quiz as any).level ?? "").toLowerCase() === "low";
+
   const colorClass = useMemo(
     () => CARD_COLORS[Math.floor(Math.random() * CARD_COLORS.length)],
     [quiz?.id],
@@ -298,12 +319,18 @@ export const FlipCard3D = ({
   };
 
   const handleClick = () => {
+    if (disabled) return;
+
     correctAudio.load();
     wrongAudio.load();
     setImgFailed(false);
     setIsFlipped(true);
     setTimeout(() => setShowOverlay(true), 10);
     onCardShown?.(index);
+
+    if (isVoiceMode) {
+      setTimeout(() => speakKorean(quiz.question), 400);
+    }
   };
 
   const resetCardState = () => {
@@ -315,6 +342,9 @@ export const FlipCard3D = ({
     setShowExplosionVisual(false);
     setImgFailed(false);
     setTypedAnswer("");
+    if (isVoiceMode) {
+      window.speechSynthesis?.cancel();
+    }
   };
 
   const handleClose = (e?: React.MouseEvent) => {
@@ -435,7 +465,7 @@ export const FlipCard3D = ({
       `}</style>
 
       <div
-        className="perspective-1000 relative h-full w-full cursor-pointer"
+        className={`perspective-1000 relative h-full w-full ${disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"}`}
         onClick={handleClick}
       >
         <div
@@ -527,30 +557,50 @@ export const FlipCard3D = ({
                     />
                   ) : null}
 
-                  <h2
-                    className={`px-2 font-extrabold break-keep ${
-                      displayImage && !imgFailed
-                        ? "mb-6 text-3xl leading-snug md:mb-8 md:text-4xl"
-                        : "mb-10 text-4xl leading-relaxed md:mb-12 md:text-5xl"
-                    }`}
-                  >
-                    {quiz.question.split("___").map((part, i, arr) => (
-                      <span key={i}>
-                        {part}
-                        {i < arr.length - 1 && (
-                          <span
-                            className={`mx-2 inline-block rounded-lg border-2 align-middle ${
-                              coopTheme.optionBorder
-                            } ${coopTheme.blankBg} ${
-                              displayImage && !imgFailed
-                                ? "h-12 w-28"
-                                : "h-14 w-32"
-                            }`}
-                          />
-                        )}
-                      </span>
-                    ))}
-                  </h2>
+                  {/* ── 음성 모드: 스피커 버튼 ── */}
+                  {isVoiceMode ? (
+                    <div className="mb-10 flex flex-col items-center gap-6 md:mb-12">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          speakKorean(quiz.question);
+                        }}
+                        className="grid h-32 w-32 place-items-center rounded-full bg-sky-100 text-7xl shadow-lg transition-all hover:scale-105 hover:bg-sky-200 active:scale-95"
+                      >
+                        🔊
+                      </button>
+                      <p className="text-xl font-bold text-gray-400">
+                        버튼을 눌러 다시 들어보세요
+                      </p>
+                    </div>
+                  ) : (
+                    /* ── 텍스트 모드: 기존 질문 표시 ── */
+                    <h2
+                      className={`px-2 font-extrabold break-keep ${
+                        displayImage && !imgFailed
+                          ? "mb-6 text-3xl leading-snug md:mb-8 md:text-4xl"
+                          : "mb-10 text-4xl leading-relaxed md:mb-12 md:text-5xl"
+                      }`}
+                    >
+                      {quiz.question.split("___").map((part, i, arr) => (
+                        <span key={i}>
+                          {part}
+                          {i < arr.length - 1 && (
+                            <span
+                              className={`mx-2 inline-block rounded-lg border-2 align-middle ${
+                                coopTheme.optionBorder
+                              } ${coopTheme.blankBg} ${
+                                displayImage && !imgFailed
+                                  ? "h-12 w-28"
+                                  : "h-14 w-32"
+                              }`}
+                            />
+                          )}
+                        </span>
+                      ))}
+                    </h2>
+                  )}
 
                   {safeOptions.length > 0 ? (
                     <div className="mt-70 grid grid-cols-1 gap-5 md:grid-cols-2">

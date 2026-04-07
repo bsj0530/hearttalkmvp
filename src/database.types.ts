@@ -49,16 +49,19 @@ export type Database = {
           category: string | null
           correct_answer: string | null
           created_at: string | null
+          event_at: string
           event_type: string
           id: string
           is_correct: boolean | null
           level: string | null
           metadata: Json | null
+          no_response: boolean | null
           participant_id: string
           player_id: string | null
           player_name: string | null
           question: string | null
           quiz_id: number | null
+          reaction_time_ms: number | null
           selected_option: string | null
           session_id: string
           slot_index: number | null
@@ -68,16 +71,19 @@ export type Database = {
           category?: string | null
           correct_answer?: string | null
           created_at?: string | null
+          event_at: string
           event_type: string
           id?: string
           is_correct?: boolean | null
           level?: string | null
           metadata?: Json | null
+          no_response?: boolean | null
           participant_id: string
           player_id?: string | null
           player_name?: string | null
           question?: string | null
           quiz_id?: number | null
+          reaction_time_ms?: number | null
           selected_option?: string | null
           session_id: string
           slot_index?: number | null
@@ -87,16 +93,19 @@ export type Database = {
           category?: string | null
           correct_answer?: string | null
           created_at?: string | null
+          event_at?: string
           event_type?: string
           id?: string
           is_correct?: boolean | null
           level?: string | null
           metadata?: Json | null
+          no_response?: boolean | null
           participant_id?: string
           player_id?: string | null
           player_name?: string | null
           question?: string | null
           quiz_id?: number | null
+          reaction_time_ms?: number | null
           selected_option?: string | null
           session_id?: string
           slot_index?: number | null
@@ -109,6 +118,7 @@ export type Database = {
           created_at: string
           id: string
           level: string
+          low_mode: string | null
           nickname: string
           participant_id: string
         }
@@ -116,6 +126,7 @@ export type Database = {
           created_at?: string
           id?: string
           level: string
+          low_mode?: string | null
           nickname: string
           participant_id: string
         }
@@ -123,6 +134,7 @@ export type Database = {
           created_at?: string
           id?: string
           level?: string
+          low_mode?: string | null
           nickname?: string
           participant_id?: string
         }
@@ -137,6 +149,7 @@ export type Database = {
           id: number
           image_url: string | null
           level: string
+          mode: string | null
           options: Json
           question: string
           updated_at: string
@@ -149,6 +162,7 @@ export type Database = {
           id?: never
           image_url?: string | null
           level: string
+          mode?: string | null
           options: Json
           question: string
           updated_at?: string
@@ -161,6 +175,7 @@ export type Database = {
           id?: never
           image_url?: string | null
           level?: string
+          mode?: string | null
           options?: Json
           question?: string
           updated_at?: string
