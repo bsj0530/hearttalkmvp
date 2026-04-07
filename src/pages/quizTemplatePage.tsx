@@ -9,6 +9,8 @@ import muteIcon from "@/assets/image/mute.png";
 import volumeIcon from "@/assets/image/volume.png";
 
 type Level = "low" | "mid" | "high";
+type LowMode = "voice" | "text";
+
 const CATEGORY_THEME: Record<
   string,
   { bg: string; title: string; sub: string }
@@ -18,9 +20,11 @@ const CATEGORY_THEME: Record<
   chapter3: { bg: "#FFD6D6", title: "#FF4F8B", sub: "#EC4899" },
   chapter4: { bg: "#e2cbf6", title: "#6D28D9", sub: "#A78BFA" },
 };
+
 export default function QuizTemplatePage() {
-  const { levelId, categoryId } = useParams() as {
+  const { levelId, lowMode, categoryId } = useParams() as {
     levelId?: Level;
+    lowMode?: LowMode;
     categoryId?: string;
   };
 
@@ -54,6 +58,9 @@ export default function QuizTemplatePage() {
     ? IndexCategories.find((c) => c.id === categoryId)
     : null;
 
+  const resolvedLowMode: LowMode | undefined =
+    levelId === "low" ? (lowMode === "text" ? "text" : "voice") : undefined;
+
   let renderBody: React.ReactNode;
 
   if (!categoryId || !levelId) {
@@ -86,6 +93,7 @@ export default function QuizTemplatePage() {
         <PhotoGrid
           categoryTitle={categoryInfo.id}
           selectedLevel={levelId}
+          lowMode={resolvedLowMode}
           titleColor={theme.title}
         />
       </div>

@@ -203,13 +203,64 @@ function getFrontImageFromColorClass(colorClass: string) {
 
 /* ── TTS 헬퍼 ── */
 
+const JAMO_MAP: Record<string, string> = {
+  ㄱ: "기역",
+  ㄴ: "니은",
+  ㄷ: "디귿",
+  ㄹ: "리을",
+  ㅁ: "미음",
+  ㅂ: "비읍",
+  ㅅ: "시옷",
+  ㅇ: "이응",
+  ㅈ: "지읒",
+  ㅊ: "치읓",
+  ㅋ: "키읔",
+  ㅌ: "티읕",
+  ㅍ: "피읖",
+  ㅎ: "히읗",
+  ㅏ: "아",
+  ㅓ: "어",
+  ㅗ: "오",
+  ㅜ: "우",
+  ㅡ: "으",
+  ㅣ: "이",
+  ㅐ: "애",
+  ㅔ: "에",
+  ㅑ: "야",
+  ㅕ: "여",
+  ㅛ: "요",
+  ㅠ: "유",
+};
+
+function replaceStandaloneJamo(text: string): string {
+  return text
+    .split(/(\s+|[.,!?()[\]{}"'`~:;/\\|-])/)
+    .map((token) => JAMO_MAP[token] ?? token)
+    .join("");
+}
+
+function normalizeForTTS(text: string): string {
+  const cleaned = text
+    .replace(/___/g, "빈칸")
+    .replace(/\n+/g, " ")
+    .replace(/\s+/g, " ")
+    .replace(/([0-9]+)번/g, "$1 번")
+    .replace(/([0-9]+)초/g, "$1 초")
+    .replace(/([0-9]+)%/g, "$1 퍼센트")
+    .trim();
+
+  return replaceStandaloneJamo(cleaned);
+}
+
 function speakKorean(text: string) {
   if (!window.speechSynthesis) return;
   window.speechSynthesis.cancel();
-  const utter = new SpeechSynthesisUtterance(text.replace(/___/g, "빈칸"));
+
+  const utter = new SpeechSynthesisUtterance(normalizeForTTS(text));
   utter.lang = "ko-KR";
   utter.rate = 0.85;
   utter.pitch = 1.0;
+
   window.speechSynthesis.speak(utter);
 }
 
@@ -233,7 +284,7 @@ type FlipCard3DProps = {
 export const FlipCard3D = ({
   quiz,
   index,
-  lowMode = "text",
+  lowMode = "voice",
   disabled = false,
   onCardShown,
   onAnswer,
@@ -301,6 +352,7 @@ export const FlipCard3D = ({
     a.volume = 0.9;
     return a;
   }, []);
+
   const wrongAudio = useMemo(() => {
     const a = new Audio(wrongSfx as unknown as string);
     a.preload = "auto";
@@ -313,7 +365,7 @@ export const FlipCard3D = ({
       a.pause();
       a.currentTime = 0;
       void a.play();
-    } catch (e) {
+    } catch {
       // ignore
     }
   };
@@ -342,9 +394,7 @@ export const FlipCard3D = ({
     setShowExplosionVisual(false);
     setImgFailed(false);
     setTypedAnswer("");
-    if (isVoiceMode) {
-      window.speechSynthesis?.cancel();
-    }
+    window.speechSynthesis?.cancel();
   };
 
   const handleClose = (e?: React.MouseEvent) => {
@@ -557,7 +607,6 @@ export const FlipCard3D = ({
                     />
                   ) : null}
 
-                  {/* ── 음성 모드: 스피커 버튼 ── */}
                   {isVoiceMode ? (
                     <div className="mb-10 flex flex-col items-center gap-6 md:mb-12">
                       <button
@@ -575,7 +624,6 @@ export const FlipCard3D = ({
                       </p>
                     </div>
                   ) : (
-                    /* ── 텍스트 모드: 기존 질문 표시 ── */
                     <h2
                       className={`px-2 font-extrabold break-keep ${
                         displayImage && !imgFailed
@@ -612,6 +660,7 @@ export const FlipCard3D = ({
                             ? "border-emerald-300 bg-emerald-500 text-white shadow-inner"
                             : "scale-95 border-slate-900 bg-slate-900 text-slate-300 shadow-inner"
                           : `bg-white ${coopTheme.optionBorder} ${coopTheme.optionHoverBg} hover:shadow-lg`;
+
                         return (
                           <button
                             key={`${index}-${i}-${option}`}

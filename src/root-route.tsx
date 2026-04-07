@@ -29,16 +29,6 @@ function PlayersEntry() {
   return <PlayersPage />;
 }
 
-function QuizEntry() {
-  const participantId = useParticipant((state) => state.participantId);
-  const hasHydrated = useParticipant((state) => state._hasHydrated);
-
-  if (!hasHydrated) return null;
-  if (!participantId) return <Navigate to="/" replace />;
-
-  return <QuizTemplatePage />;
-}
-
 export default function RootRoute() {
   return (
     <Routes>
@@ -46,7 +36,16 @@ export default function RootRoute() {
         <Route path="/" element={<RootEntry />} />
         <Route path="/players" element={<PlayersEntry />} />
       </Route>
+
       <Route path="/wrong-review" element={<WrongReviewPage />} />
+
+      {/* low 전용 */}
+      <Route
+        path="/quiz/low/:lowMode/:categoryId"
+        element={<QuizTemplatePage />}
+      />
+
+      {/* mid/high */}
       <Route path="/quiz/:levelId/:categoryId" element={<QuizTemplatePage />} />
 
       <Route path="*" element={<Navigate to="/" replace />} />

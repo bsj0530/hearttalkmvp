@@ -34,6 +34,7 @@ import { logGameEvent, nowISO } from "@/lib/game-logger";
 export default function PhotoGrid({
   categoryTitle,
   selectedLevel,
+  lowMode,
   titleColor,
 }: PhotoGridProps) {
   const navigate = useNavigate();
@@ -67,12 +68,10 @@ export default function PhotoGrid({
     Array(targetCount).fill(false),
   );
 
-  /* ── 턴 잠금 ── */
   const [turnLocked, setTurnLocked] = useState(false);
 
   const usedIdsRef = useRef<Set<number>>(new Set());
 
-  /* ── 로깅용 refs ── */
   const turnNumberRef = useRef(0);
   const cardShownAtRef = useRef<string | null>(null);
   const pendingQuizRef = useRef<QuizData | null>(null);
@@ -103,8 +102,6 @@ export default function PhotoGrid({
   const [cardH, setCardH] = useState(230);
   const [gridReady, setGridReady] = useState(false);
   const winnerSoundPlayedRef = useRef(false);
-
-  /* ── 기본 hooks ── */
 
   useEffect(() => {
     return () => {
@@ -167,8 +164,6 @@ export default function PhotoGrid({
     });
   }, [turnDeck]);
 
-  /* ── 데이터 로딩 ── */
-
   const fetchByLevelAndMode = useCallback(
     async (lv: "low" | "mid" | "high", mode?: "text" | "voice") => {
       if (!categoryTitle) return [];
@@ -178,9 +173,11 @@ export default function PhotoGrid({
         .eq("category", categoryTitle)
         .eq("level", lv)
         .limit(POOL_SIZE);
+
       if (mode) {
         query = query.eq("mode", mode);
       }
+
       const { data, error } = await query;
       if (error) throw error;
       return (data ?? []) as QuizData[];
@@ -191,7 +188,9 @@ export default function PhotoGrid({
   const ensurePoolLoaded = useCallback(async () => {
     const needReload =
       !poolRef.current.loaded || poolRef.current.lastCategory !== categoryTitle;
+
     if (!needReload) return;
+
     if (!categoryTitle) {
       poolRef.current = {
         loaded: true,
@@ -203,12 +202,14 @@ export default function PhotoGrid({
       };
       return;
     }
+
     const [low_text, low_voice, mid, high] = await Promise.all([
       fetchByLevelAndMode("low", "text"),
       fetchByLevelAndMode("low", "voice"),
       fetchByLevelAndMode("mid"),
       fetchByLevelAndMode("high"),
     ]);
+
     poolRef.current = {
       loaded: true,
       lastCategory: categoryTitle,
@@ -225,7 +226,8 @@ export default function PhotoGrid({
     );
   }, [players.length]);
 
-  /* ── 현재 플레이어의 low 풀 가져오기 헬퍼 ── */
+  const resolvedRouteLowMode = lowMode ?? "voice";
+
   const getLowPool = useCallback((playerLowMode?: "voice" | "text") => {
     if (playerLowMode === "voice") {
       return poolRef.current.low_voice ?? [];
@@ -252,11 +254,13 @@ export default function PhotoGrid({
           targetCount,
           usedIdsRef.current,
         );
+
         if (gameStarted && sampled.every((x) => x === null)) {
           toast("문제가 부족해요", {
             description: `${lv.toUpperCase()} 난이도 문제를 더 추가해줘!`,
           });
         }
+
         setTurnDeck(sampled);
       } catch (e) {
         console.error(e);
@@ -275,9 +279,12 @@ export default function PhotoGrid({
       setRevealed(Array(targetCount).fill(false));
       return;
     }
+
     if (!players.length) return;
+
     const currentPlayer = players[activeIndex];
-    const playerLowMode = currentPlayer?.low_mode ?? "text";
+    const playerLowMode = currentPlayer?.low_mode ?? resolvedRouteLowMode;
+
     buildTurnDeck(activeLevel, playerLowMode);
   }, [
     gameStarted,
@@ -290,9 +297,8 @@ export default function PhotoGrid({
     buildTurnDeck,
     targetCount,
     players,
+    resolvedRouteLowMode,
   ]);
-
-  /* ── 로깅 헬퍼 ── */
 
   const currentPlayerInfo = () => {
     const p = players[activeIndex];
@@ -351,7 +357,7 @@ export default function PhotoGrid({
       level: activeLevel,
       slotIndex,
       eventAt: ts,
-      metadata: { lowMode: activePlayer?.low_mode ?? null },
+      metadata: { lowMode: activePlayer?.low_mode ?? resolvedRouteLowMode },
     });
   };
 
@@ -386,7 +392,7 @@ export default function PhotoGrid({
       slotIndex,
       eventAt: responseAt,
       reactionTimeMs,
-      metadata: { lowMode: activePlayer?.low_mode ?? null },
+      metadata: { lowMode: activePlayer?.low_mode ?? resolvedRouteLowMode },
     });
 
     logGameEvent({
@@ -437,9 +443,10 @@ export default function PhotoGrid({
     } else {
       pushWrong(q);
 
-      const currentMode = activePlayer?.low_mode ?? "text";
+      const currentMode = activePlayer?.low_mode ?? resolvedRouteLowMode;
       const source = getPoolForLevel(activeLevel, currentMode);
       const replacement = pickRandomUnique(source, 1, usedIdsRef.current);
+
       setTurnDeck((prev) => {
         const next = [...prev];
         next[slotIndex] = replacement[0] ?? null;
@@ -488,8 +495,6 @@ export default function PhotoGrid({
     setTurnLocked(false);
   };
 
-  /* ── winner 사운드/컨페티 ── */
-
   useEffect(() => {
     if (!winner || winnerSoundPlayedRef.current) return;
     winnerSoundPlayedRef.current = true;
@@ -534,8 +539,6 @@ export default function PhotoGrid({
     setRevealed(Array(targetCount).fill(false));
     setRefreshKey((prev) => prev + 1);
   };
-
-  /* ── winner 화면 ── */
 
   if (winner) {
     return (
@@ -588,14 +591,10 @@ export default function PhotoGrid({
     );
   }
 
-  /* ── 이미지 업로드 ── */
-
   const uploadTeamImageIfNeeded = async (): Promise<string | null> => {
     if (!teamImageFile) return teamImagePreview;
     return teamImagePreview;
   };
-
-  /* ── 게임 시작 ── */
 
   const minRequired = 2;
   const canStartBase = draftSelectedIds.length >= minRequired;
@@ -631,7 +630,7 @@ export default function PhotoGrid({
       id: p.id,
       name: p.nickname,
       level: p.level,
-      low_mode: p.low_mode ?? "text",
+      low_mode: p.low_mode ?? resolvedRouteLowMode,
     }));
 
     setPlayers(mappedPlayers);
@@ -655,7 +654,7 @@ export default function PhotoGrid({
           id: p.id,
           name: p.nickname,
           level: p.level,
-          low_mode: p.low_mode ?? null,
+          low_mode: p.low_mode ?? resolvedRouteLowMode,
         })),
       },
     });
@@ -667,8 +666,6 @@ export default function PhotoGrid({
   const goBackToGameSelect = () => {
     setShowExitConfirm(true);
   };
-
-  /* ── 렌더링 ── */
 
   return (
     <div
@@ -705,6 +702,7 @@ export default function PhotoGrid({
                 const row = Math.floor(index / GRID_COLS);
                 const x = (col / Math.max(1, GRID_COLS - 1)) * 100;
                 const y = (row / Math.max(1, gridRows - 1)) * 100;
+
                 return (
                   <div
                     key={`piece-${index}`}
@@ -744,7 +742,7 @@ export default function PhotoGrid({
                   <FlipCard3D
                     quiz={quiz}
                     index={index}
-                    lowMode={activePlayer?.low_mode ?? "text"}
+                    lowMode={activePlayer?.low_mode ?? resolvedRouteLowMode}
                     disabled={turnLocked}
                     onCardShown={handleCardShown}
                     onAnswer={handleAnswer}
@@ -760,7 +758,6 @@ export default function PhotoGrid({
 
       {gameStarted && (
         <div className="fixed top-[76px] left-6 z-[9998] flex flex-row items-center gap-3 select-none">
-          {" "}
           {players.map((player, idx) => (
             <div
               key={player.id}
@@ -907,6 +904,7 @@ export default function PhotoGrid({
             <div className="max-h-[55vh] space-y-2 overflow-y-auto pr-1">
               {savedPlayers.map((p) => {
                 const picked = draftSelectedIds.includes(p.id);
+
                 return (
                   <button
                     key={p.id}
@@ -932,11 +930,16 @@ export default function PhotoGrid({
                       }}
                     >
                       {p.level}
-                      {p.level === "low" && p.low_mode === "voice" ? " 🔊" : ""}
+                      {p.level === "low"
+                        ? p.low_mode === "voice"
+                          ? " 🔊 voice"
+                          : " 📝 text"
+                        : ""}
                     </span>
                   </button>
                 );
               })}
+
               {savedPlayers.length === 0 && (
                 <div className="py-6 text-center text-sm font-bold text-gray-400">
                   저장된 플레이어가 없습니다.
