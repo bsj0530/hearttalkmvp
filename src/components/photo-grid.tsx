@@ -574,7 +574,6 @@ export default function PhotoGrid({
     sound.startBgm();
 
     setWrongAnswers([]);
-    usedIdsRef.current = new Set();
     poolRef.current.loaded = false;
     turnNumberRef.current = 0;
     turnStartLoggedRef.current = false;
