@@ -68,7 +68,7 @@ export default function PhotoGrid({
     Array(targetCount).fill(false),
   );
 
-  const [turnLocked, setTurnLocked] = useState(false);
+  // const [turnLocked, setTurnLocked] = useState(false);
 
   const usedIdsRef = useRef<Set<number>>(new Set());
 
@@ -322,7 +322,7 @@ export default function PhotoGrid({
   };
 
   const handleCardShown = (slotIndex: number) => {
-    setTurnLocked(true);
+    // setTurnLocked(true);
 
     const { playerId, playerName } = currentPlayerInfo();
 
@@ -481,7 +481,7 @@ export default function PhotoGrid({
         },
       });
 
-      setTurnLocked(false);
+      // setTurnLocked(false);
       setWinner("협동 성공! (사진 완성)");
       return;
     }
@@ -492,7 +492,7 @@ export default function PhotoGrid({
     pendingQuizRef.current = null;
 
     advanceTurn();
-    setTurnLocked(false);
+    // setTurnLocked(false);
   };
 
   useEffect(() => {
@@ -529,7 +529,7 @@ export default function PhotoGrid({
     winnerSoundPlayedRef.current = false;
     setActiveIndex(0);
     setWrongAnswers([]);
-    setTurnLocked(false);
+    // setTurnLocked(false);
     poolRef.current.loaded = false;
     turnNumberRef.current = 0;
     turnStartLoggedRef.current = false;
@@ -608,7 +608,7 @@ export default function PhotoGrid({
     sound.startBgm();
 
     setWrongAnswers([]);
-    setTurnLocked(false);
+    // setTurnLocked(false);
     poolRef.current.loaded = false;
     turnNumberRef.current = 0;
     turnStartLoggedRef.current = false;
@@ -743,7 +743,7 @@ export default function PhotoGrid({
                     quiz={quiz}
                     index={index}
                     lowMode={activePlayer?.low_mode ?? resolvedRouteLowMode}
-                    disabled={turnLocked}
+                    // disabled={turnLocked}
                     onCardShown={handleCardShown}
                     onAnswer={handleAnswer}
                     onCorrect={(idx, opt) => handleTurnEnd(idx, true, opt)}
