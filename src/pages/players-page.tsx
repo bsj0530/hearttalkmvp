@@ -142,8 +142,8 @@ export default function PlayersPage() {
         {level === "low" && (
           <div className="mb-3 flex gap-2">
             {[
-              { key: "voice" as const, label: "🔊 음성 + 3선택지" },
-              { key: "text" as const, label: "📝 글자 + 2선택지" },
+              { key: "voice" as const, label: "음성" },
+              { key: "text" as const, label: "글자" },
             ].map(({ key, label }) => {
               const selected = lowMode === key;
               return (

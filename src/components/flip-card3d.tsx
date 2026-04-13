@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { CARD_COLORS, type QuizData } from "@/constants/photo-items";
 import confetti from "canvas-confetti";
-
+import soundIcon from "@/assets/image/volume.png";
 import kittyisland2 from "@/assets/image/kittyisland2.png";
 import hindoongyi from "@/assets/image/hindoongyi.webp";
 import doraamog from "@/assets/image/doraamog.webp";
@@ -38,6 +38,15 @@ import jake from "@/assets/image/jake.svg";
 import frozen12 from "@/assets/image/frozen12.png";
 import bate from "@/assets/image/bate.webp";
 import backsulgongju from "@/assets/image/backsulgongju.webp";
+
+import yellowImg from "@/assets/image/yellow.webp";
+import skyImg from "@/assets/image/sky.webp";
+import raddyImg from "@/assets/image/raddy.webp";
+import purpleImg from "@/assets/image/purple.webp";
+import pinkImg from "@/assets/image/pink.webp";
+import green2Img from "@/assets/image/green2.webp";
+import blueImg from "@/assets/image/blue.webp";
+import blackImg from "@/assets/image/black.webp";
 
 /* ── 새 캐릭터 ── */
 import zooble from "@/assets/image/zooble.png";
@@ -176,15 +185,25 @@ function getFrontImageFromColorClass(colorClass: string) {
       MickeyMouse,
       Pomni,
       bulibuli,
+      blueImg,
     ]);
   if (c.includes("sky"))
-    return pickRandom([frozen2, backsulgongju, girl, kittyisland2]);
+    return pickRandom([frozen2, backsulgongju, girl, kittyisland2, skyImg]);
   if (c.includes("yellow") || c.includes("amber"))
-    return pickRandom([pickachu, tails, jake, simpsons, pobi, Jax, hindoongyi]);
+    return pickRandom([
+      pickachu,
+      tails,
+      jake,
+      simpsons,
+      pobi,
+      Jax,
+      hindoongyi,
+      yellowImg,
+    ]);
   if (c.includes("orange"))
-    return pickRandom([fox, fox2, toad, zzanggu, Kaufmo, doraamog]);
+    return pickRandom([fox, fox2, toad, zzanggu, Kaufmo, doraamog, pinkImg]);
   if (c.includes("green"))
-    return pickRandom([nucles, Panda, bulibuli, hurk, joker]);
+    return pickRandom([nucles, Panda, bulibuli, hurk, joker, green2Img]);
   if (c.includes("red"))
     return pickRandom([
       deadpool,
@@ -194,10 +213,12 @@ function getFrontImageFromColorClass(colorClass: string) {
       zooble,
       doraamog,
       ironman,
+      raddyImg,
     ]);
   if (c.includes("violet") || c.includes("purple"))
-    return pickRandom([edy, yinagongju, pin, Pomni, kittyisland2]);
-  if (c.includes("indigo")) return pickRandom([doctor, bate, Jax, hindoongyi]);
+    return pickRandom([edy, yinagongju, pin, Pomni, kittyisland2, purpleImg]);
+  if (c.includes("indigo"))
+    return pickRandom([doctor, bate, Jax, hindoongyi, blackImg]);
   return pickRandom([frozen1, frozen2, girl]);
 }
 
@@ -615,13 +636,14 @@ export const FlipCard3D = ({
                           e.stopPropagation();
                           speakKorean(quiz.question);
                         }}
-                        className="grid h-32 w-32 place-items-center rounded-full bg-sky-100 text-7xl shadow-lg transition-all hover:scale-105 hover:bg-sky-200 active:scale-95"
+                        className="grid h-32 w-32 place-items-center rounded-full bg-sky-100 shadow-lg transition-all hover:scale-105 hover:bg-sky-200 active:scale-95"
                       >
-                        🔊
+                        <img
+                          src={soundIcon}
+                          alt="소리 듣기"
+                          className="h-20 w-20"
+                        />
                       </button>
-                      <p className="text-xl font-bold text-gray-400">
-                        버튼을 눌러 다시 들어보세요
-                      </p>
                     </div>
                   ) : (
                     <h2

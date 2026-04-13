@@ -9,7 +9,7 @@ class SoundManager {
   private unlocked = false;
 
   sfxVolume = 0.9;
-  bgmVolume = 0.35;
+  bgmVolume = 0.05;
 
   // ✅ 첫 클릭에서 호출하면 모바일/크롬 정책 대응이 안정적
   unlock() {
