@@ -273,14 +273,20 @@ function normalizeForTTS(text: string): string {
   return replaceStandaloneJamo(cleaned);
 }
 
+/* ── TTS 설정 (코드에서 직접 조절) ── */
+
+const TTS_RATE = 0.2; // 0.1(매우 느림) ~ 2.0(매우 빠름)
+const TTS_VOLUME = 1.0; // 0.0(무음) ~ 1.0(최대)
+
 function speakKorean(text: string) {
   if (!window.speechSynthesis) return;
   window.speechSynthesis.cancel();
 
   const utter = new SpeechSynthesisUtterance(normalizeForTTS(text));
   utter.lang = "ko-KR";
-  utter.rate = 0.85;
+  utter.rate = TTS_RATE;
   utter.pitch = 1.0;
+  utter.volume = TTS_VOLUME;
 
   window.speechSynthesis.speak(utter);
 }
