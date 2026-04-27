@@ -275,7 +275,7 @@ function normalizeForTTS(text: string): string {
 
 /* ── TTS 설정 (코드에서 직접 조절) ── */
 
-const TTS_RATE = 0.2; // 0.1(매우 느림) ~ 2.0(매우 빠름)
+const TTS_RATE = 0.6; // 0.1(매우 느림) ~ 2.0(매우 빠름)
 const TTS_VOLUME = 1.0; // 0.0(무음) ~ 1.0(최대)
 
 function speakKorean(text: string) {
