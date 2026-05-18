@@ -15,10 +15,26 @@ const CATEGORY_THEME: Record<
   string,
   { bg: string; title: string; sub: string }
 > = {
-  chapter1: { bg: "#BFE9FF", title: "#0B5ED7", sub: "#3366FF" },
-  chapter2: { bg: "#FFE066", title: "#FF8C00", sub: "#F59E0B" },
-  chapter3: { bg: "#FFD6D6", title: "#FF4F8B", sub: "#EC4899" },
-  chapter4: { bg: "#e2cbf6", title: "#6D28D9", sub: "#A78BFA" },
+  chapter1: {
+    bg: "#FFF9D2",
+    title: "#7C6A00",
+    sub: "#A89400",
+  },
+  chapter2: {
+    bg: "#FFEBCC",
+    title: "#A85C00",
+    sub: "#D97706",
+  },
+  chapter3: {
+    bg: "#BFDDF0",
+    title: "#256D9C",
+    sub: "#3F8DCA",
+  },
+  chapter4: {
+    bg: "#8CC0EB",
+    title: "#155C93",
+    sub: "#256D9C",
+  },
 };
 
 export default function QuizTemplatePage() {

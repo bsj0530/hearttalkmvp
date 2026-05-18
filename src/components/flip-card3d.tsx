@@ -48,6 +48,12 @@ import green2Img from "@/assets/image/green2.webp";
 import blueImg from "@/assets/image/blue.webp";
 import blackImg from "@/assets/image/black.webp";
 
+/* ── 추가 이미지 ── */
+import tayo from "@/assets/image/tayo.png";
+import rizamong from "@/assets/image/rizamong.webp";
+import mu from "@/assets/image/mu.webp";
+import metamong from "@/assets/image/metamong.webp";
+
 /* ── 새 캐릭터 ── */
 import zooble from "@/assets/image/zooble.png";
 import Pomni from "@/assets/image/Pomni.webp";
@@ -90,52 +96,52 @@ function getCoopTheme(rawCategory: any): CoopTheme {
     return {
       key: "chapter1",
       gradientBorder:
-        "bg-gradient-to-br from-[#0B5ED7] via-[#3B82F6] to-[#BFE9FF]",
-      overlayBorder: "border-sky-400",
+        "bg-gradient-to-br from-[#E8D96A] via-[#FFF9D2] to-[#FFFDF0]",
+      overlayBorder: "border-[#E8D96A]",
       topGlow:
-        "bg-gradient-to-r from-sky-500/25 via-blue-500/20 to-cyan-500/25",
-      optionBorder: "border-sky-200",
-      optionHoverBg: "hover:bg-sky-100",
-      blankBg: "bg-sky-100",
+        "bg-gradient-to-r from-[#FFF9D2]/60 via-[#E8D96A]/40 to-[#FFFDF0]/60",
+      optionBorder: "border-[#E8D96A]",
+      optionHoverBg: "hover:bg-[#FFF9D2]",
+      blankBg: "bg-[#FFF9D2]",
     };
 
   if (c.includes("chapter2"))
     return {
       key: "chapter2",
       gradientBorder:
-        "bg-gradient-to-br from-[#B45309] via-[#F59E0B] to-[#FFE066]",
-      overlayBorder: "border-amber-400",
+        "bg-gradient-to-br from-[#F4B56A] via-[#FFEBCC] to-[#FFF7EA]",
+      overlayBorder: "border-[#F4B56A]",
       topGlow:
-        "bg-gradient-to-r from-amber-500/25 via-yellow-400/25 to-orange-400/20",
-      optionBorder: "border-amber-200",
-      optionHoverBg: "hover:bg-amber-100",
-      blankBg: "bg-amber-100",
+        "bg-gradient-to-r from-[#FFEBCC]/60 via-[#F4B56A]/35 to-[#FFF7EA]/60",
+      optionBorder: "border-[#F4B56A]",
+      optionHoverBg: "hover:bg-[#FFEBCC]",
+      blankBg: "bg-[#FFEBCC]",
     };
 
   if (c.includes("chapter3"))
     return {
       key: "chapter3",
       gradientBorder:
-        "bg-gradient-to-br from-[#FF4F8B] via-[#EC4899] to-[#FFD6D6]",
-      overlayBorder: "border-rose-400",
+        "bg-gradient-to-br from-[#6EAED8] via-[#BFDDF0] to-[#EEF8FF]",
+      overlayBorder: "border-[#6EAED8]",
       topGlow:
-        "bg-gradient-to-r from-rose-500/25 via-pink-500/20 to-fuchsia-500/20",
-      optionBorder: "border-rose-200",
-      optionHoverBg: "hover:bg-rose-100",
-      blankBg: "bg-rose-100",
+        "bg-gradient-to-r from-[#BFDDF0]/60 via-[#6EAED8]/35 to-[#EEF8FF]/60",
+      optionBorder: "border-[#6EAED8]",
+      optionHoverBg: "hover:bg-[#BFDDF0]",
+      blankBg: "bg-[#BFDDF0]",
     };
 
   if (c.includes("chapter4"))
     return {
       key: "chapter4",
       gradientBorder:
-        "bg-gradient-to-br from-[#6D28D9] via-[#A78BFA] to-[#EDE9FE]",
-      overlayBorder: "border-purple-400",
+        "bg-gradient-to-br from-[#3F8DCA] via-[#8CC0EB] to-[#D9EEFF]",
+      overlayBorder: "border-[#3F8DCA]",
       topGlow:
-        "bg-gradient-to-r from-purple-500/25 via-violet-400/20 to-fuchsia-500/20",
-      optionBorder: "border-purple-200",
-      optionHoverBg: "hover:bg-purple-100",
-      blankBg: "bg-purple-100",
+        "bg-gradient-to-r from-[#8CC0EB]/60 via-[#3F8DCA]/35 to-[#D9EEFF]/60",
+      optionBorder: "border-[#3F8DCA]",
+      optionHoverBg: "hover:bg-[#D9EEFF]",
+      blankBg: "bg-[#D9EEFF]",
     };
 
   return {
@@ -153,74 +159,131 @@ function getCoopTheme(rawCategory: any): CoopTheme {
 
 function getGradientBorderFromColorClass(colorClass: string) {
   const c = (colorClass || "").toLowerCase();
-  if (c.includes("blue") || c.includes("sky") || c.includes("cyan"))
-    return "bg-gradient-to-br from-[#003366] via-[#3366FF] to-[#99CCFF]";
-  if (c.includes("yellow") || c.includes("amber"))
-    return "bg-gradient-to-br from-[#B45309] via-[#F59E0B] to-[#FDE047]";
-  if (c.includes("green") || c.includes("emerald"))
-    return "bg-gradient-to-br from-[#065F46] via-[#10B981] to-[#A7F3D0]";
-  if (c.includes("orange"))
-    return "bg-gradient-to-br from-[#9A3412] via-[#F97316] to-[#FDBA74]";
-  if (c.includes("indigo"))
-    return "bg-gradient-to-br from-[#0B1026] via-[#1E2A78] to-[#93C5FD]";
-  if (c.includes("violet") || c.includes("purple"))
-    return "bg-gradient-to-br from-[#3B0764] via-[#7C3AED] to-[#E9D5FF]";
-  if (c.includes("red") || c.includes("rose") || c.includes("pink"))
-    return "bg-gradient-to-br from-[#9D174D] via-[#EC4899] to-[#FBCFE8]";
-  return "bg-gradient-to-br from-white/40 via-white/20 to-white/40";
-}
 
-function pickRandom<T>(arr: T[]): T {
-  return arr[Math.floor(Math.random() * arr.length)];
-}
+  if (
+    c.includes("slate") ||
+    c.includes("gray") ||
+    c.includes("zinc") ||
+    c.includes("neutral") ||
+    c.includes("black")
+  )
+    return "bg-gradient-to-br from-[#111827] via-[#374151] to-[#6B7280]";
 
-function getFrontImageFromColorClass(colorClass: string) {
-  const c = (colorClass || "").toLowerCase();
+  if (c.includes("sky") || c.includes("cyan"))
+    return "bg-gradient-to-br from-[#0369A1] via-[#38BDF8] to-[#BAE6FD]";
+
   if (c.includes("blue"))
-    return pickRandom([
-      sonic,
-      frozen1,
-      frozen12,
-      pororo,
-      MickeyMouse,
-      Pomni,
-      bulibuli,
-      blueImg,
-    ]);
-  if (c.includes("sky"))
-    return pickRandom([frozen2, backsulgongju, girl, kittyisland2, skyImg]);
-  if (c.includes("yellow") || c.includes("amber"))
-    return pickRandom([
-      pickachu,
-      tails,
-      jake,
-      simpsons,
-      pobi,
-      Jax,
-      hindoongyi,
-      yellowImg,
-    ]);
-  if (c.includes("orange"))
-    return pickRandom([fox, fox2, toad, zzanggu, Kaufmo, doraamog, pinkImg]);
-  if (c.includes("green"))
-    return pickRandom([nucles, Panda, bulibuli, hurk, joker, green2Img]);
-  if (c.includes("red"))
-    return pickRandom([
-      deadpool,
-      shadow,
-      PowerpuffGirls,
-      loopy,
-      zooble,
-      doraamog,
-      ironman,
-      raddyImg,
-    ]);
-  if (c.includes("violet") || c.includes("purple"))
-    return pickRandom([edy, yinagongju, pin, Pomni, kittyisland2, purpleImg]);
+    return "bg-gradient-to-br from-[#1E3A8A] via-[#3B82F6] to-[#BFDBFE]";
+
   if (c.includes("indigo"))
-    return pickRandom([doctor, bate, Jax, hindoongyi, blackImg]);
-  return pickRandom([frozen1, frozen2, girl]);
+    return "bg-gradient-to-br from-[#3730A3] via-[#6366F1] to-[#C7D2FE]";
+
+  if (c.includes("violet") || c.includes("purple"))
+    return "bg-gradient-to-br from-[#6D28D9] via-[#A78BFA] to-[#E9D5FF]";
+
+  if (c.includes("fuchsia"))
+    return "bg-gradient-to-br from-[#A21CAF] via-[#E879F9] to-[#F5D0FE]";
+
+  if (c.includes("rose") || c.includes("pink") || c.includes("red"))
+    return "bg-gradient-to-br from-[#BE123C] via-[#FB7185] to-[#FFE4E6]";
+
+  if (c.includes("orange"))
+    return "bg-gradient-to-br from-[#C2410C] via-[#FB923C] to-[#FED7AA]";
+
+  if (c.includes("amber") || c.includes("yellow"))
+    return "bg-gradient-to-br from-[#B45309] via-[#FBBF24] to-[#FEF3C7]";
+
+  if (c.includes("lime"))
+    return "bg-gradient-to-br from-[#4D7C0F] via-[#A3E635] to-[#ECFCCB]";
+
+  if (c.includes("green") || c.includes("emerald"))
+    return "bg-gradient-to-br from-[#047857] via-[#34D399] to-[#D1FAE5]";
+
+  if (c.includes("teal"))
+    return "bg-gradient-to-br from-[#0F766E] via-[#5EEAD4] to-[#CCFBF1]";
+
+  return "bg-gradient-to-br from-[#334155] via-[#64748B] to-[#CBD5E1]";
 }
+
+function shuffleArray<T>(arr: T[]) {
+  const copied = [...arr];
+
+  for (let i = copied.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copied[i], copied[j]] = [copied[j], copied[i]];
+  }
+
+  return copied;
+}
+
+/* 
+  한 번 섞은 이미지 풀.
+  카드에서는 index 기준으로 하나씩 가져오기 때문에
+  한 화면에 18장이라면 이미지 풀이 18개 이상인 경우 중복 없이 나옴.
+*/
+const FRONT_IMAGE_POOL = [
+  tayo,
+  rizamong,
+  mu,
+  metamong,
+
+  sonic,
+  frozen1,
+  frozen12,
+  pororo,
+  MickeyMouse,
+  Pomni,
+  bulibuli,
+  blueImg,
+
+  frozen2,
+  backsulgongju,
+  girl,
+  kittyisland2,
+  skyImg,
+
+  pickachu,
+  tails,
+  jake,
+  simpsons,
+  pobi,
+  Jax,
+  hindoongyi,
+  yellowImg,
+
+  fox,
+  fox2,
+  toad,
+  zzanggu,
+  Kaufmo,
+  doraamog,
+  pinkImg,
+
+  nucles,
+  Panda,
+  hurk,
+  joker,
+  green2Img,
+
+  deadpool,
+  shadow,
+  PowerpuffGirls,
+  loopy,
+  zooble,
+  ironman,
+  raddyImg,
+
+  edy,
+  yinagongju,
+  pin,
+  purpleImg,
+
+  doctor,
+  bate,
+  blackImg,
+];
+
+const SHUFFLED_FRONT_IMAGES = shuffleArray(FRONT_IMAGE_POOL);
 
 /* ── TTS 헬퍼 ── */
 
@@ -273,10 +336,10 @@ function normalizeForTTS(text: string): string {
   return replaceStandaloneJamo(cleaned);
 }
 
-/* ── TTS 설정 (코드에서 직접 조절) ── */
+/* ── TTS 설정 ── */
 
-const TTS_RATE = 0.6; // 0.1(매우 느림) ~ 2.0(매우 빠름)
-const TTS_VOLUME = 1.0; // 0.0(무음) ~ 1.0(최대)
+const TTS_RATE = 0.6;
+const TTS_VOLUME = 1.0;
 
 function speakKorean(text: string) {
   if (!window.speechSynthesis) return;
@@ -326,14 +389,15 @@ export const FlipCard3D = ({
     () => CARD_COLORS[Math.floor(Math.random() * CARD_COLORS.length)],
     [quiz?.id],
   );
+
   const frontGradientBorder = useMemo(
     () => getGradientBorderFromColorClass(colorClass),
     [colorClass],
   );
-  const frontImage = useMemo(
-    () => getFrontImageFromColorClass(colorClass),
-    [colorClass],
-  );
+
+  const frontImage = useMemo(() => {
+    return SHUFFLED_FRONT_IMAGES[index % SHUFFLED_FRONT_IMAGES.length];
+  }, [index]);
 
   const coopTheme = useMemo(() => {
     const raw = (quiz as any).category ?? (quiz as any).category_id ?? "";
@@ -542,7 +606,9 @@ export const FlipCard3D = ({
       `}</style>
 
       <div
-        className={`perspective-1000 relative h-full w-full ${disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"}`}
+        className={`perspective-1000 relative h-full w-full ${
+          disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"
+        }`}
         onClick={handleClick}
       >
         <div
@@ -580,7 +646,9 @@ export const FlipCard3D = ({
 
       {isFlipped && (
         <div
-          className={`fixed inset-0 z-[9999] flex items-center justify-center transition-opacity duration-500 ${showOverlay ? "opacity-100" : "pointer-events-none opacity-0"}`}
+          className={`fixed inset-0 z-[9999] flex items-center justify-center transition-opacity duration-500 ${
+            showOverlay ? "opacity-100" : "pointer-events-none opacity-0"
+          }`}
         >
           <div
             className="absolute inset-0 bg-black/80 backdrop-blur-sm"
@@ -597,7 +665,9 @@ export const FlipCard3D = ({
           )}
 
           <div
-            className={`transform-style-preserve-3d relative h-[95%] w-[95vw] max-w-6xl transition-transform duration-700 ${showOverlay ? "rotate-y-180" : "rotate-y-0"}`}
+            className={`transform-style-preserve-3d relative h-[95%] w-[95vw] max-w-6xl transition-transform duration-700 ${
+              showOverlay ? "rotate-y-180" : "rotate-y-0"
+            }`}
           >
             <div
               className={[
@@ -763,7 +833,11 @@ export const FlipCard3D = ({
 
                   {feedback && (
                     <div
-                      className={`mt-8 text-3xl font-black ${isCorrectFeedback ? "animate-bounce text-yellow-400" : "text-white drop-shadow-md"}`}
+                      className={`mt-8 text-3xl font-black ${
+                        isCorrectFeedback
+                          ? "animate-bounce text-yellow-400"
+                          : "text-white drop-shadow-md"
+                      }`}
                     >
                       {feedback}
                     </div>

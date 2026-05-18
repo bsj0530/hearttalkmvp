@@ -20,27 +20,27 @@ const CATEGORY_STYLE: Record<
 > = {
   chapter1: {
     borderGradient:
-      "bg-gradient-to-br from-[#003366] via-[#3366FF] to-[#99CCFF]",
-    innerBg: "bg-[#BFE9FF]",
-    text: "text-[#0B5ED7]",
+      "bg-gradient-to-br from-[#E8D96A] via-[#FFF9D2] to-[#FFFDF0]",
+    innerBg: "bg-[#FFF9D2]",
+    text: "text-[#7C6A00]",
   },
   chapter2: {
     borderGradient:
-      "bg-gradient-to-br from-[#B45309] via-[#F59E0B] to-[#FDE047]",
-    innerBg: "bg-[#FFE066]",
-    text: "text-[#FF8C00]",
+      "bg-gradient-to-br from-[#F4B56A] via-[#FFEBCC] to-[#FFF7EA]",
+    innerBg: "bg-[#FFEBCC]",
+    text: "text-[#A85C00]",
   },
   chapter3: {
     borderGradient:
-      "bg-gradient-to-br from-[#9D174D] via-[#EC4899] to-[#FBCFE8]",
-    innerBg: "bg-[#FFD6D6]",
-    text: "text-[#FF4F8B]",
+      "bg-gradient-to-br from-[#6EAED8] via-[#BFDDF0] to-[#EEF8FF]",
+    innerBg: "bg-[#BFDDF0]",
+    text: "text-[#256D9C]",
   },
   chapter4: {
     borderGradient:
-      "bg-gradient-to-br from-[#A78BFA] via-[#C4B5FD] to-[#EDE9FE]",
-    innerBg: "bg-[#e2cbf6]",
-    text: "text-[#6D28D9]",
+      "bg-gradient-to-br from-[#3F8DCA] via-[#8CC0EB] to-[#D9EEFF]",
+    innerBg: "bg-[#8CC0EB]",
+    text: "text-[#155C93]",
   },
 };
 

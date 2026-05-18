@@ -68,8 +68,6 @@ export default function PhotoGrid({
     Array(targetCount).fill(false),
   );
 
-  // const [turnLocked, setTurnLocked] = useState(false);
-
   const usedIdsRef = useRef<Set<number>>(new Set());
 
   const turnNumberRef = useRef(0);
@@ -112,8 +110,10 @@ export default function PhotoGrid({
   useLayoutEffect(() => {
     const el = gridWrapRef.current;
     if (!el) return;
+
     const GAP = 0;
     const BOTTOM_SAFE = 13;
+
     const compute = () => {
       const rect = el.getBoundingClientRect();
       const available = window.innerHeight - rect.top - BOTTOM_SAFE;
@@ -121,10 +121,13 @@ export default function PhotoGrid({
       setCardH(Math.max(160, Math.min(400, Math.floor(h))));
       setGridReady(true);
     };
+
     compute();
+
     const ro = new ResizeObserver(compute);
     ro.observe(el);
     window.addEventListener("resize", compute);
+
     return () => {
       ro.disconnect();
       window.removeEventListener("resize", compute);
@@ -135,11 +138,13 @@ export default function PhotoGrid({
     queryKey: ["players", participantId],
     queryFn: async () => {
       if (!participantId) return [];
+
       const { data, error } = await supabase
         .from("player_profiles")
         .select("id,nickname,level,low_mode")
         .eq("participant_id", participantId)
         .order("created_at", { ascending: false });
+
       if (error) throw error;
       return (data ?? []) as PlayerProfile[];
     },
@@ -148,6 +153,7 @@ export default function PhotoGrid({
   });
 
   const activePlayer = players[activeIndex];
+
   const activeLevel: "low" | "mid" | "high" =
     activePlayer?.level ?? selectedLevel ?? "mid";
 
@@ -167,6 +173,7 @@ export default function PhotoGrid({
   const fetchByLevelAndMode = useCallback(
     async (lv: "low" | "mid" | "high", mode?: "text" | "voice") => {
       if (!categoryTitle) return [];
+
       let query = supabase
         .from("quizzes")
         .select("*")
@@ -180,6 +187,7 @@ export default function PhotoGrid({
 
       const { data, error } = await query;
       if (error) throw error;
+
       return (data ?? []) as QuizData[];
     },
     [categoryTitle],
@@ -232,6 +240,7 @@ export default function PhotoGrid({
     if (playerLowMode === "voice") {
       return poolRef.current.low_voice ?? [];
     }
+
     return poolRef.current.low_text ?? [];
   }, []);
 
@@ -246,8 +255,10 @@ export default function PhotoGrid({
   const buildTurnDeck = useCallback(
     async (lv: "low" | "mid" | "high", playerLowMode?: "voice" | "text") => {
       setLoading(true);
+
       try {
         await ensurePoolLoaded();
+
         const source = getPoolForLevel(lv, playerLowMode);
         const sampled = pickRandomUnique(
           source,
@@ -305,7 +316,7 @@ export default function PhotoGrid({
     return { playerId: p?.id, playerName: p?.name };
   };
 
-  const pushWrong = (q: QuizData) => {
+  const pushWrong = (q: QuizData, selectedOption: string) => {
     setWrongAnswers((prev) => [
       ...prev,
       {
@@ -313,6 +324,7 @@ export default function PhotoGrid({
         question: q.question,
         options: normalizeOptions(q.options),
         answer: q.answer,
+        selectedAnswer: selectedOption,
         image_url: q.image_url ?? null,
         category: (q.category as any) ?? categoryTitle,
         level: String(q.level),
@@ -322,8 +334,6 @@ export default function PhotoGrid({
   };
 
   const handleCardShown = (slotIndex: number) => {
-    // setTurnLocked(true);
-
     const { playerId, playerName } = currentPlayerInfo();
 
     if (!turnStartLoggedRef.current) {
@@ -336,6 +346,7 @@ export default function PhotoGrid({
         level: activeLevel,
         eventAt: nowISO(),
       });
+
       turnStartLoggedRef.current = true;
     }
 
@@ -371,6 +382,7 @@ export default function PhotoGrid({
     const { playerId, playerName } = currentPlayerInfo();
 
     let reactionTimeMs: number | undefined;
+
     if (cardShownAtRef.current) {
       reactionTimeMs =
         new Date(responseAt).getTime() -
@@ -418,6 +430,7 @@ export default function PhotoGrid({
     if (!q) return;
 
     usedIdsRef.current.add(q.id);
+
     const { playerId, playerName } = currentPlayerInfo();
 
     logGameEvent({
@@ -441,7 +454,7 @@ export default function PhotoGrid({
         isGameOver = true;
       }
     } else {
-      pushWrong(q);
+      pushWrong(q, selectedOption);
 
       const currentMode = activePlayer?.low_mode ?? resolvedRouteLowMode;
       const source = getPoolForLevel(activeLevel, currentMode);
@@ -481,7 +494,6 @@ export default function PhotoGrid({
         },
       });
 
-      // setTurnLocked(false);
       setWinner("협동 성공! (사진 완성)");
       return;
     }
@@ -492,11 +504,11 @@ export default function PhotoGrid({
     pendingQuizRef.current = null;
 
     advanceTurn();
-    // setTurnLocked(false);
   };
 
   useEffect(() => {
     if (!winner || winnerSoundPlayedRef.current) return;
+
     winnerSoundPlayedRef.current = true;
     sound.playWinner();
     sound.stopBgm();
@@ -504,10 +516,12 @@ export default function PhotoGrid({
 
   useEffect(() => {
     if (!winner || !canvasRef.current) return;
+
     const myConfetti = confetti.create(canvasRef.current, {
       resize: true,
       useWorker: true,
     });
+
     const interval = setInterval(() => {
       myConfetti({
         particleCount: 80,
@@ -521,6 +535,7 @@ export default function PhotoGrid({
         shapes: ["circle"],
       });
     }, 400);
+
     return () => clearInterval(interval);
   }, [winner]);
 
@@ -529,7 +544,6 @@ export default function PhotoGrid({
     winnerSoundPlayedRef.current = false;
     setActiveIndex(0);
     setWrongAnswers([]);
-    // setTurnLocked(false);
     poolRef.current.loaded = false;
     turnNumberRef.current = 0;
     turnStartLoggedRef.current = false;
@@ -547,9 +561,11 @@ export default function PhotoGrid({
           ref={canvasRef}
           className="pointer-events-none fixed top-0 left-0 z-[2000000] h-screen w-screen"
         />
+
         <div className="fixed inset-0 z-[1000000] flex flex-col items-center justify-center bg-black text-center text-white">
           <div className="mb-2 text-3xl font-bold">🎉 게임 종료 🎉</div>
           <div className="mb-3 text-xl">{winner}</div>
+
           {teamImageUrl && (
             <img
               src={teamImageUrl}
@@ -557,6 +573,7 @@ export default function PhotoGrid({
               className="mb-6 max-h-[80vh] w-[min(1100px,96vw)] rounded-2xl object-cover shadow-2xl"
             />
           )}
+
           <div className="flex flex-wrap items-center justify-center gap-3">
             <button
               onClick={() => window.location.reload()}
@@ -564,18 +581,21 @@ export default function PhotoGrid({
             >
               다시 시작
             </button>
+
             <button
               onClick={restartGame}
               className="rounded-xl bg-gray-700 px-6 py-3 font-bold text-white hover:bg-gray-600"
             >
               점수만 초기화
             </button>
+
             <button
               onClick={() => {
                 if (!wrongAnswers.length) {
                   toast("오답이 없어요 🎉", {});
                   return;
                 }
+
                 navigate("/wrong-review", {
                   state: { wrongAnswers, categoryTitle, selectedLevel, accent },
                 });
@@ -608,7 +628,6 @@ export default function PhotoGrid({
     sound.startBgm();
 
     setWrongAnswers([]);
-    // setTurnLocked(false);
     poolRef.current.loaded = false;
     turnNumberRef.current = 0;
     turnStartLoggedRef.current = false;
@@ -743,7 +762,6 @@ export default function PhotoGrid({
                     quiz={quiz}
                     index={index}
                     lowMode={activePlayer?.low_mode ?? resolvedRouteLowMode}
-                    // disabled={turnLocked}
                     onCardShown={handleCardShown}
                     onAnswer={handleAnswer}
                     onCorrect={(idx, opt) => handleTurnEnd(idx, true, opt)}
@@ -768,7 +786,9 @@ export default function PhotoGrid({
               }`}
             >
               <div
-                className={`font-black text-white ${activeIndex === idx ? "text-2xl" : "text-lg"}`}
+                className={`font-black text-white ${
+                  activeIndex === idx ? "text-2xl" : "text-lg"
+                }`}
               >
                 {player.name}
               </div>
@@ -796,6 +816,7 @@ export default function PhotoGrid({
                   <p className="mb-4 text-center text-sm font-black text-gray-800">
                     홈 화면으로 돌아가시겠습니까?
                   </p>
+
                   <div className="flex gap-2">
                     <button
                       onClick={() => setShowExitConfirm(false)}
@@ -803,6 +824,7 @@ export default function PhotoGrid({
                     >
                       취소
                     </button>
+
                     <button
                       onClick={() => {
                         sound.stopBgm();
@@ -821,6 +843,7 @@ export default function PhotoGrid({
             <h2 className="mb-1 text-center text-lg font-black">
               플레이어 선택
             </h2>
+
             <p className="mb-4 text-center text-xs font-bold text-gray-500">
               협동 모드는 2명 이상 + 사진 1장 등록 + 카드 수 선택 후 시작
             </p>
@@ -829,9 +852,11 @@ export default function PhotoGrid({
               <div className="mb-2 text-sm font-black text-gray-800">
                 카드 수(퍼즐 조각 수)
               </div>
+
               <div className="flex gap-2">
                 {[6, 12, 18].map((n) => {
                   const selected = teamCardCount === n;
+
                   return (
                     <button
                       key={n}
@@ -849,6 +874,7 @@ export default function PhotoGrid({
                   );
                 })}
               </div>
+
               <div className="mt-2 text-xs font-bold text-gray-500">
                 (6열 고정이라 6/12/18이 퍼즐이 가장 예쁘게 맞아요)
               </div>
@@ -858,6 +884,7 @@ export default function PhotoGrid({
               <div className="mb-2 text-sm font-black text-gray-800">
                 협동 사진 등록
               </div>
+
               {teamImagePreview ? (
                 <div className="relative overflow-hidden rounded-xl">
                   <img
@@ -865,6 +892,7 @@ export default function PhotoGrid({
                     alt="preview"
                     className="h-40 w-full object-cover"
                   />
+
                   <button
                     type="button"
                     onClick={() => {
@@ -883,9 +911,11 @@ export default function PhotoGrid({
                   <div className="text-sm font-black text-gray-700">
                     사진 1장 업로드
                   </div>
+
                   <div className="mt-1 text-xs font-bold text-gray-500">
                     정답 맞히면 카드가 사라지고 사진 조각이 열려요
                   </div>
+
                   <input
                     className="hidden"
                     type="file"
@@ -893,6 +923,7 @@ export default function PhotoGrid({
                     onChange={(e) => {
                       const file = e.target.files?.[0];
                       if (!file) return;
+
                       setTeamImageFile(file);
                       setTeamImagePreview(URL.createObjectURL(file));
                     }}
@@ -923,6 +954,7 @@ export default function PhotoGrid({
                     }}
                   >
                     <span className="font-bold">{p.nickname}</span>
+
                     <span
                       className="text-sm font-black"
                       style={{
@@ -956,6 +988,7 @@ export default function PhotoGrid({
               >
                 초기화
               </button>
+
               <button
                 onClick={startGame}
                 disabled={!canStart}
