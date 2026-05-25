@@ -184,11 +184,11 @@ export default function WrongReviewPage() {
                             {open && (
                               <div className="border-t bg-white px-7 py-7">
                                 {w.image_url && (
-                                  <div className="mb-6 overflow-hidden rounded-2xl border bg-gray-50">
+                                  <div className="mb-6 flex h-[360px] items-center justify-center overflow-hidden rounded-2xl border bg-gray-50">
                                     <img
                                       src={w.image_url}
                                       alt="wrong"
-                                      className="aspect-[4/3] w-full object-cover"
+                                      className="max-h-full max-w-full object-contain"
                                       loading="lazy"
                                     />
                                   </div>

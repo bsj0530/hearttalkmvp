@@ -696,7 +696,7 @@ export const FlipCard3D = ({
                     <img
                       src={displayImage}
                       alt={`퀴즈: ${quiz.question}`}
-                      className="mx-auto mb-4 max-h-[40vh] w-auto rounded-2xl object-contain shadow-2xl md:mb-7 md:max-h-96"
+                      className="mx-auto mb-3 max-h-[34vh] w-auto rounded-2xl object-contain shadow-xl md:max-h-[38vh]"
                       loading="eager"
                       onError={() => {
                         setImgFailed(true);
@@ -749,7 +749,8 @@ export const FlipCard3D = ({
                   )}
 
                   {safeOptions.length > 0 ? (
-                    <div className="mt-70 grid grid-cols-1 gap-5 md:grid-cols-2">
+                    <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+                      {" "}
                       {safeOptions.map((option, i) => {
                         const isSel = selectedAnswer === option;
                         const isAns = option === quiz.answer;

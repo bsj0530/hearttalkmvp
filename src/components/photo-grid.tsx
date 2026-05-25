@@ -17,6 +17,8 @@ import confetti from "canvas-confetti";
 import { sound } from "@/lib/sound";
 
 import type {
+  Level,
+  LowMode,
   PhotoGridProps,
   Player,
   PlayerProfile,
@@ -30,6 +32,34 @@ import {
 } from "@/lib/photo-grid.utils";
 import { useParticipant } from "@/store/participants";
 import { logGameEvent, nowISO } from "@/lib/game-logger";
+
+type PoolKey =
+  | "level1_text"
+  | "level1_voice"
+  | "level2"
+  | "level3"
+  | "level4"
+  | "level5"
+  | "level6";
+
+const LEVEL_LABELS: Record<Level, string> = {
+  level1: "1단계",
+  level2: "2단계",
+  level3: "3단계",
+  level4: "4단계",
+  level5: "5단계",
+  level6: "6단계",
+};
+
+const makeEmptyPools = (): Record<PoolKey, QuizData[]> => ({
+  level1_text: [],
+  level1_voice: [],
+  level2: [],
+  level3: [],
+  level4: [],
+  level5: [],
+  level6: [],
+});
 
 export default function PhotoGrid({
   categoryTitle,
@@ -82,17 +112,11 @@ export default function PhotoGrid({
   const poolRef = useRef<{
     loaded: boolean;
     lastCategory?: string;
-    low_text: QuizData[];
-    low_voice: QuizData[];
-    mid: QuizData[];
-    high: QuizData[];
+    pools: Record<PoolKey, QuizData[]>;
   }>({
     loaded: false,
     lastCategory: undefined,
-    low_text: [],
-    low_voice: [],
-    mid: [],
-    high: [],
+    pools: makeEmptyPools(),
   });
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -141,7 +165,7 @@ export default function PhotoGrid({
 
       const { data, error } = await supabase
         .from("player_profiles")
-        .select("id,nickname,level,low_mode")
+        .select("id,participant_id,nickname,level,low_mode,created_at")
         .eq("participant_id", participantId)
         .order("created_at", { ascending: false });
 
@@ -154,8 +178,7 @@ export default function PhotoGrid({
 
   const activePlayer = players[activeIndex];
 
-  const activeLevel: "low" | "mid" | "high" =
-    activePlayer?.level ?? selectedLevel ?? "mid";
+  const activeLevel: Level = activePlayer?.level ?? selectedLevel ?? "level3";
 
   useEffect(() => {
     if (gameStarted) return;
@@ -171,7 +194,7 @@ export default function PhotoGrid({
   }, [turnDeck]);
 
   const fetchByLevelAndMode = useCallback(
-    async (lv: "low" | "mid" | "high", mode?: "text" | "voice") => {
+    async (lv: Level, mode?: LowMode) => {
       if (!categoryTitle) return [];
 
       let query = supabase
@@ -181,7 +204,7 @@ export default function PhotoGrid({
         .eq("level", lv)
         .limit(POOL_SIZE);
 
-      if (mode) {
+      if (lv === "level1" && mode) {
         query = query.eq("mode", mode);
       }
 
@@ -203,28 +226,34 @@ export default function PhotoGrid({
       poolRef.current = {
         loaded: true,
         lastCategory: categoryTitle,
-        low_text: [],
-        low_voice: [],
-        mid: [],
-        high: [],
+        pools: makeEmptyPools(),
       };
       return;
     }
 
-    const [low_text, low_voice, mid, high] = await Promise.all([
-      fetchByLevelAndMode("low", "text"),
-      fetchByLevelAndMode("low", "voice"),
-      fetchByLevelAndMode("mid"),
-      fetchByLevelAndMode("high"),
-    ]);
+    const [level1Text, level1Voice, level2, level3, level4, level5, level6] =
+      await Promise.all([
+        fetchByLevelAndMode("level1", "text"),
+        fetchByLevelAndMode("level1", "voice"),
+        fetchByLevelAndMode("level2"),
+        fetchByLevelAndMode("level3"),
+        fetchByLevelAndMode("level4"),
+        fetchByLevelAndMode("level5"),
+        fetchByLevelAndMode("level6"),
+      ]);
 
     poolRef.current = {
       loaded: true,
       lastCategory: categoryTitle,
-      low_text: shuffleArray(low_text),
-      low_voice: shuffleArray(low_voice),
-      mid: shuffleArray(mid),
-      high: shuffleArray(high),
+      pools: {
+        level1_text: shuffleArray(level1Text),
+        level1_voice: shuffleArray(level1Voice),
+        level2: shuffleArray(level2),
+        level3: shuffleArray(level3),
+        level4: shuffleArray(level4),
+        level5: shuffleArray(level5),
+        level6: shuffleArray(level6),
+      },
     };
   }, [categoryTitle, fetchByLevelAndMode]);
 
@@ -234,26 +263,29 @@ export default function PhotoGrid({
     );
   }, [players.length]);
 
-  const resolvedRouteLowMode = lowMode ?? "voice";
+  const resolvedRouteLowMode: LowMode = lowMode ?? "voice";
 
-  const getLowPool = useCallback((playerLowMode?: "voice" | "text") => {
-    if (playerLowMode === "voice") {
-      return poolRef.current.low_voice ?? [];
-    }
+  const getPoolKey = useCallback(
+    (lv: Level, playerLowMode?: LowMode): PoolKey => {
+      if (lv === "level1") {
+        return playerLowMode === "voice" ? "level1_voice" : "level1_text";
+      }
 
-    return poolRef.current.low_text ?? [];
-  }, []);
+      return lv;
+    },
+    [],
+  );
 
   const getPoolForLevel = useCallback(
-    (lv: "low" | "mid" | "high", playerLowMode?: "voice" | "text") => {
-      if (lv === "low") return getLowPool(playerLowMode);
-      return poolRef.current[lv] ?? [];
+    (lv: Level, playerLowMode?: LowMode) => {
+      const key = getPoolKey(lv, playerLowMode);
+      return poolRef.current.pools[key] ?? [];
     },
-    [getLowPool],
+    [getPoolKey],
   );
 
   const buildTurnDeck = useCallback(
-    async (lv: "low" | "mid" | "high", playerLowMode?: "voice" | "text") => {
+    async (lv: Level, playerLowMode?: LowMode) => {
       setLoading(true);
 
       try {
@@ -268,7 +300,7 @@ export default function PhotoGrid({
 
         if (gameStarted && sampled.every((x) => x === null)) {
           toast("문제가 부족해요", {
-            description: `${lv.toUpperCase()} 난이도 문제를 더 추가해줘!`,
+            description: `${LEVEL_LABELS[lv]} 문제를 더 추가해줘!`,
           });
         }
 
@@ -545,6 +577,7 @@ export default function PhotoGrid({
     setActiveIndex(0);
     setWrongAnswers([]);
     poolRef.current.loaded = false;
+    usedIdsRef.current.clear();
     turnNumberRef.current = 0;
     turnStartLoggedRef.current = false;
     cardShownAtRef.current = null;
@@ -629,6 +662,7 @@ export default function PhotoGrid({
 
     setWrongAnswers([]);
     poolRef.current.loaded = false;
+    usedIdsRef.current.clear();
     turnNumberRef.current = 0;
     turnStartLoggedRef.current = false;
     cardShownAtRef.current = null;
@@ -645,7 +679,7 @@ export default function PhotoGrid({
     const url = await uploadTeamImageIfNeeded();
     setTeamImageUrl(url ?? teamImagePreview);
 
-    const mappedPlayers = picked.map((p) => ({
+    const mappedPlayers: Player[] = picked.map((p) => ({
       id: p.id,
       name: p.nickname,
       level: p.level,
@@ -664,7 +698,7 @@ export default function PhotoGrid({
       turnNumber: 0,
       eventType: "game_start",
       category: categoryTitle,
-      level: selectedLevel,
+      level: selectedLevel ?? "level3",
       eventAt: nowISO(),
       metadata: {
         playerCount: picked.length,
@@ -876,7 +910,7 @@ export default function PhotoGrid({
               </div>
 
               <div className="mt-2 text-xs font-bold text-gray-500">
-                (6열 고정이라 6/12/18이 퍼즐이 가장 예쁘게 맞아요)
+                6열 고정이라 6/12/18이 퍼즐이 가장 예쁘게 맞아요
               </div>
             </div>
 
@@ -961,8 +995,8 @@ export default function PhotoGrid({
                         color: picked ? "rgba(255,255,255,0.85)" : "#6B7280",
                       }}
                     >
-                      {p.level}
-                      {p.level === "low"
+                      {LEVEL_LABELS[p.level]}
+                      {p.level === "level1"
                         ? p.low_mode === "voice"
                           ? " 🔊 voice"
                           : " 📝 text"

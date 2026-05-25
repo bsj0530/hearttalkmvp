@@ -4,7 +4,8 @@ import { supabase } from "@/lib/supabase";
 import { useParticipant } from "@/store/participants";
 import { Navigate } from "react-router";
 
-type Level = "low" | "mid" | "high";
+type Level = "level1" | "level2" | "level3" | "level4" | "level5" | "level6";
+
 type LowMode = "voice" | "text";
 
 type PlayerProfile = {
@@ -16,13 +17,26 @@ type PlayerProfile = {
   created_at: string;
 };
 
+const LEVEL_OPTIONS: { value: Level; label: string }[] = [
+  { value: "level1", label: "1단계" },
+  { value: "level2", label: "2단계" },
+  { value: "level3", label: "3단계" },
+  { value: "level4", label: "4단계" },
+  { value: "level5", label: "5단계" },
+  { value: "level6", label: "6단계" },
+];
+
+const levelLabel = (level: Level) => {
+  return LEVEL_OPTIONS.find((x) => x.value === level)?.label ?? level;
+};
+
 export default function PlayersPage() {
   const qc = useQueryClient();
   const participantId = useParticipant((state) => state.participantId);
   const hasHydrated = useParticipant((state) => state._hasHydrated);
 
   const [nickname, setNickname] = useState("");
-  const [level, setLevel] = useState<Level>("low");
+  const [level, setLevel] = useState<Level>("level1");
   const [lowMode, setLowMode] = useState<LowMode>("voice");
 
   const {
@@ -56,14 +70,14 @@ export default function PlayersPage() {
         participant_id: participantId,
         nickname: name,
         level,
-        low_mode: level === "low" ? lowMode : null,
+        low_mode: level === "level1" ? lowMode : null,
       });
 
       if (error) throw error;
     },
     onSuccess: () => {
       setNickname("");
-      setLevel("low");
+      setLevel("level1");
       setLowMode("voice");
       qc.invalidateQueries({ queryKey: ["players", participantId] });
     },
@@ -106,6 +120,29 @@ export default function PlayersPage() {
     },
   });
 
+  const updateLevel = useMutation({
+    mutationFn: async ({
+      playerId,
+      newLevel,
+    }: {
+      playerId: string;
+      newLevel: Level;
+    }) => {
+      const { error } = await supabase
+        .from("player_profiles")
+        .update({
+          level: newLevel,
+          low_mode: newLevel === "level1" ? "voice" : null,
+        })
+        .eq("id", playerId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["players", participantId] });
+    },
+  });
+
   if (!hasHydrated) return null;
   if (!participantId) return <Navigate to="/" replace />;
 
@@ -114,7 +151,6 @@ export default function PlayersPage() {
       <h1 className="mb-2 text-2xl font-bold">플레이어 관리</h1>
       <p className="mb-6 text-sm text-gray-500">참여자 번호: {participantId}</p>
 
-      {/* ── 추가 폼 ── */}
       <div className="mb-6 rounded-2xl border p-4">
         <div className="mb-3 flex gap-2">
           <input
@@ -123,29 +159,32 @@ export default function PlayersPage() {
             placeholder="닉네임"
             className="flex-1 rounded border p-2"
           />
+
           <select
             value={level}
             onChange={(e) => {
               const lv = e.target.value as Level;
               setLevel(lv);
-              if (lv !== "low") setLowMode("voice");
+              if (lv !== "level1") setLowMode("voice");
             }}
             className="rounded border p-2"
           >
-            <option value="low">쉬움</option>
-            <option value="mid">보통</option>
-            <option value="high">어려움</option>
+            {LEVEL_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
           </select>
         </div>
 
-        {/* low 선택 시 모드 선택 */}
-        {level === "low" && (
+        {level === "level1" && (
           <div className="mb-3 flex gap-2">
             {[
               { key: "voice" as const, label: "음성" },
               { key: "text" as const, label: "글자" },
             ].map(({ key, label }) => {
               const selected = lowMode === key;
+
               return (
                 <button
                   key={key}
@@ -185,6 +224,12 @@ export default function PlayersPage() {
         </div>
       )}
 
+      {updateLevel.isError && (
+        <div className="mb-4 text-sm text-red-500">
+          {(updateLevel.error as Error).message}
+        </div>
+      )}
+
       {isLoading && (
         <div className="py-10 text-center text-gray-500">불러오는 중…</div>
       )}
@@ -195,15 +240,11 @@ export default function PlayersPage() {
         </div>
       )}
 
-      {/* ── 플레이어 목록 ── */}
       <ul className="space-y-2">
         {players?.map((p) => (
           <li key={p.id} className="rounded-xl border p-4">
-            <div className="flex items-center justify-between">
-              <span className="font-semibold">
-                {p.nickname} <span className="text-gray-400">·</span>{" "}
-                <span className="text-gray-600">{p.level}</span>
-              </span>
+            <div className="flex items-center justify-between gap-3">
+              <span className="font-semibold">{p.nickname}</span>
 
               <button
                 onClick={() => deletePlayer.mutate(p.id)}
@@ -214,8 +255,38 @@ export default function PlayersPage() {
               </button>
             </div>
 
-            {/* low 플레이어: 모드 전환 */}
-            {p.level === "low" && (
+            <div className="mt-3 grid grid-cols-3 gap-2">
+              {LEVEL_OPTIONS.map((option) => {
+                const selected = p.level === option.value;
+
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() =>
+                      updateLevel.mutate({
+                        playerId: p.id,
+                        newLevel: option.value,
+                      })
+                    }
+                    disabled={updateLevel.isPending}
+                    className={`rounded-lg border px-2 py-2 text-xs font-black transition active:scale-95 ${
+                      selected
+                        ? "border-black bg-black text-white"
+                        : "border-gray-200 bg-white text-gray-700"
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="mt-2 text-xs font-bold text-gray-500">
+              현재 난이도: {levelLabel(p.level)}
+            </div>
+
+            {p.level === "level1" && (
               <div className="mt-3 flex gap-2">
                 {[
                   { key: "voice" as const, label: "🔊 음성" },
@@ -223,6 +294,7 @@ export default function PlayersPage() {
                 ].map(({ key, label }) => {
                   const current = p.low_mode ?? "voice";
                   const selected = current === key;
+
                   return (
                     <button
                       key={key}
