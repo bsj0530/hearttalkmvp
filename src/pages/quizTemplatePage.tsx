@@ -140,7 +140,7 @@ export default function QuizTemplatePage() {
           </h1>
 
           <p className="mt-2 text-xl" style={{ color: theme.sub }}>
-            카드를 골라보세요
+            Pick your favorite card!
           </p>
         </div>
 

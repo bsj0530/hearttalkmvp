@@ -12,7 +12,7 @@ export const IndexCategories = [
   },
   {
     id: "chapter2",
-    title: "챕터6",
+    title: "Chapter 2",
     icon: <img src={math2} className="h-[250px] w-auto" />,
     link: "/:levelId/category/chapter2",
   },
